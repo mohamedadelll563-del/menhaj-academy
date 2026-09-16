@@ -123,9 +123,28 @@
             const parentName = student.parent_name || 'غير محدد';
             const teacherName = student.teacher_name || student.teacher || 'ايمن صفوت نقادي احمد';
             
-                // قراءة عمود "مدة الجلسة" من قاعدة البيانات وتحويله لشكل مفهوم
-            let rawDuration = student.مدة_الجلسة !== undefined ? student.مدة_الجلسة : (student.duration || 1);
-            let durationText = rawDuration == 1 ? 'ساعة واحدة' : (rawDuration == 0.5 ? 'نصف ساعة' : rawDuration + ' ساعة');
+            // سحب القيمة أياً كان اسم العمود في قاعدة البيانات وسحبها كنص مباشر
+            let rawDuration = student.مدة_الجلسة ?? student.duration ?? student.session_duration ?? student.time ?? '';
+            let durationText = '';
+
+            if (rawDuration !== '' && rawDuration !== null && rawDuration !== undefined) {
+                let strVal = String(rawDuration).trim();
+                // لو القيمة مُسجلة كرقم (مثلاً 40 أو 1) نحط جنبها كلمة دقيقة لو مفيهاش كلمات
+                if (!isNaN(strVal) && !strVal.includes('دقيقة') && !strVal.includes('ساعة')) {
+                    let num = Number(strVal);
+                    if (num < 1 && num > 0) {
+                        durationText = Math.round(num * 60) + ' دقيقة';
+                    } else if (num == 1) {
+                        durationText = 'ساعة واحدة';
+                    } else {
+                        durationText = strVal + ' دقيقة';
+                    }
+                } else {
+                    durationText = strVal; // تظهر زي ما هي مكتوبة تماماً (مثل "40 دقيقة")
+                }
+            } else {
+                durationText = 'غير محدد';
+            }
 
             const sessionsVal = student.classes_count !== undefined ? student.classes_count : 12;
             const feeVal = student.fees !== undefined && student.fees !== null ? student.fees : 500;
