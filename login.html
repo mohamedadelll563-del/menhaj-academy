@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية منهاج - المنصة التعليمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #062015;
+            --bg-card: #0a3322;
+            --primary-green: #10b981;
+            --accent-orange: #f59e0b;
+            --text-light: #ffffff;
+            --text-muted: #a7f3d0;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; color: var(--primary-green); font-weight: 900; margin-bottom: 5px; }
+        p.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+        .mode-selector, .role-selector {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+            gap: 4px;
+        }
+
+        .mode-btn, .role-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active, .role-btn.active {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .form-group { margin-bottom: 15px; text-align: right; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-muted); font-weight: 600; }
+        .form-group input {
+            width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color);
+            color: white; border-radius: 8px; font-size: 13px; outline: none; transition: 0.3s;
+        }
+        .form-group input:focus { border-color: var(--primary-green); }
+
+        .btn-submit {
+            width: 100%; padding: 13px; background: var(--primary-green); border: none; color: white;
+            font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-submit:hover { background: #059669; }
+
+        .admin-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--accent-orange);
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .admin-link:hover { text-decoration: underline; }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>اكاديمية منهاج</h1>
+        <p class="subtitle" id="pageSubtitle">مرحباً بك في المنصة التعليمية</p>
+
+        <!-- تبديل بين إنشاء حساب أو تسجيل الدخول -->
+        <div class="mode-selector" id="modeSelectorBox">
+            <button class="mode-btn active" onclick="switchMode('register', this)">إنشاء حساب جديد</button>
+            <button class="mode-btn" onclick="switchMode('login', this)">تسجيل الدخول</button>
+        </div>
+
+        <!-- اختيار الدور (طالب / ولي أمر أو معلم) -->
+        <div class="role-selector" id="roleSelectorBox">
+            <button class="role-btn active" onclick="switchRole('student', this)">طالب / ولي أمر</button>
+            <button class="role-btn" onclick="switchRole('teacher', this)">معلم</button>
+        </div>
+
+        <!-- نموذج تسجيل الدخول أو إنشاء الحساب -->
+        <form id="authForm" onsubmit="handleSubmit(event)">
+            
+            <!-- حقول إنشاء حساب طالب / ولي أمر -->
+            <div id="section_student_register" class="form-section active">
+                <div class="form-group"><label>اسم الطالب الكامل</label><input type="text" id="reg_std_name" placeholder="أدخل اسم الطالب"></div>
+                <div class="form-group"><label>اسم ولي الأمر</label><input type="text" id="reg_parent_name" placeholder="أدخل اسم ولي الأمر"></div>
+                <div class="form-group"><label>رقم هاتف ولي الأمر (رقم الدخول)</label><input type="text" id="reg_parent_phone" placeholder="010xxxxxxx"></div>
+                <div class="form-group"><label>كود الدخول الخاص بك (كلمة المرور)</label><input type="text" id="reg_parent_password" placeholder="أدخل كود سري"></div>
+            </div>
+
+            <!-- حقول إنشاء حساب معلم -->
+            <div id="section_teacher_register" class="form-section">
+                <div class="form-group"><label>اسم المعلم رباعي</label><input type="text" id="reg_tch_name" placeholder="أدخل اسم المعلم الكامل"></div>
+                <div class="form-group"><label>رقم هاتف المعلم الشخصي</label><input type="text" id="reg_tch_phone" placeholder="أدخل رقم هاتفك الشخصي"></div>
+                <div class="form-group"><label>المادة العلمية التي تدرسها</label><input type="text" id="reg_tch_subject" placeholder="مثال: القرآن الكريم والتجويد / النحو"></div>
+                <div class="form-group"><label>اختر كود الدخول الخاص بك (الرقم السري)</label><input type="text" id="reg_tch_password" placeholder="حدد كود الدخول الخاص بك"></div>
+            </div>
+
+            <!-- حقول تسجيل الدخول المشتركة (طالب / معلم) -->
+            <div id="section_login" class="form-section">
+                <div class="form-group"><label>رقم الهاتف (اسم الدخول)</label><input type="text" id="log_phone" placeholder="أدخل رقم الهاتف المسجل"></div>
+                <div class="form-group"><label>كود الدخول (كلمة المرور)</label><input type="password" id="log_password" placeholder="أدخل الكود السري"></div>
+            </div>
+
+            <!-- حقول تسجيل دخول المدير (الأدمن) -->
+            <div id="section_admin_login" class="form-section">
+                <div class="form-group"><label>اسم المستخدم أو كود المدير</label><input type="text" id="admin_user" placeholder="أدخل اسم المستخدم للتشغيل"></div>
+                <div class="form-group"><label>كلمة المرور الخاصة بالإدارة</label><input type="password" id="admin_pass" placeholder="أدخل كلمة مرور الإدارة"></div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtnText">إنشاء الحساب ودخول المنصة</button>
+        </form>
+
+        <!-- زر الانتقال لتسجيل دخول الأدمن أو العودة -->
+        <a class="admin-link" id="adminToggleLink" onclick="toggleAdminMode()">🔒 دخول إدارة الأكاديمية (للمدير)</a>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://rihnbystzsxwfrdabcxa.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_81So_0s9ttAS-SmJ6Ff0jQ_UaurIrNE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentMode = 'register'; 
+        let currentRole = 'student'; 
+
+        function switchMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const roleSelectorBox = document.getElementById('roleSelectorBox');
+            const submitBtn = document.getElementById('submitBtnText');
+            document.getElementById('adminToggleLink').style.display = 'block';
+            document.getElementById('modeSelectorBox').style.display = 'flex';
+            document.getElementById('pageSubtitle').textContent = "مرحباً بك في المنصة التعليمية";
+
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+
+            if (mode === 'register') {
+                roleSelectorBox.style.display = 'flex';
+                submitBtn.textContent = "إنشاء الحساب ودخول المنصة";
+                updateFormSections();
+            } else if (mode === 'login') {
+                roleSelectorBox.style.display = 'none';
+                submitBtn.textContent = "تسجيل الدخول";
+                document.getElementById('section_login').classList.add('active');
+            }
+        }
+
+        function switchRole(role, btn) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateFormSections();
+        }
+
+        function updateFormSections() {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            if (currentRole === 'student') {
+                document.getElementById('section_student_register').classList.add('active');
+            } else {
+                document.getElementById('section_teacher_register').classList.add('active');
+            }
+        }
+
+        function toggleAdminMode() {
+            const submitBtn = document.getElementById('submitBtnText');
+            const adminToggleLink = document.getElementById('adminToggleLink');
+            
+            if (currentMode !== 'admin') {
+                currentMode = 'admin';
+                document.getElementById('modeSelectorBox').style.display = 'none';
+                document.getElementById('roleSelectorBox').style.display = 'none';
+                document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('section_admin_login').classList.add('active');
+                
+                submitBtn.textContent = "دخول لوحة تحكم المدير";
+                document.getElementById('pageSubtitle').textContent = "بوابة إدارة الأكاديمية (خاص بالمدير)";
+                adminToggleLink.textContent = "← العودة لصفحة تسجيل الدخول الرئيسية";
+            } else {
+                switchMode('login', null);
+                document.querySelector('.mode-btn:nth-child(2)').classList.add('active');
+                adminToggleLink.textContent = "🔒 دخول إدارة الأكاديمية (للمدير)";
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            // 1. معالجة تسجيل دخول المدير (الأدمن)
+            if (currentMode === 'admin') {
+                const userField = document.getElementById('admin_user');
+                const passField = document.getElementById('admin_pass');
+                
+                const user = userField ? userField.value.trim() : "";
+                const pass = passField ? passField.value.trim() : "";
+
+                if (user === "admin" && pass === "123456") {
+                    alert("تم تسجيل دخول المدير بنجاح! جاري تحويلك للوحة التحكم... ✅");
+                    localStorage.setItem('isAdminLoggedIn', 'true');
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    alert("خطأ في بيانات دخول المدير! تأكد من اسم المستخدم وكلمة المرور.");
+                }
+                return;
+            }
+
+            // 2. معالجة إنشاء حساب جديد (طالب أو معلم)
+            if (currentMode === 'register') {
+                if (currentRole === 'student') {
+                    const phoneVal = document.getElementById('reg_parent_phone').value.trim();
+                    const passVal = document.getElementById('reg_parent_password').value.trim();
+                    
+                    const studentData = {
+                        name: document.getElementById('reg_std_name').value.trim(),
+                        parent_name: document.getElementById('reg_parent_name').value.trim(),
+                        phone: phoneVal,          // تم إضافته لضمان الحفظ في العمود العام
+                        parent_phone: phoneVal,
+                        password: passVal,        // تم إضافته لضمان الحفظ في العمود العام
+                        parent_password: passVal,
+                        fees: 0,
+                        status: 'pending'
+                    };
+
+                    const { error } = await _supabase.from('students').insert([studentData]);
+                    
+                    if (error) { 
+                        alert("خطأ في التسجيل: " + error.message); 
+                    } else {
+                        alert("تم إنشاء حساب الطالب بنجاح! حسابك قيد المراجعة من الإدارة.");
+                        localStorage.setItem('currentUser', JSON.stringify(studentData));
+                        localStorage.setItem('user_phone', phoneVal);
+                        window.location.href = 'pending.html';
+                    }
+                } else {
+                    const teacherPhone = document.getElementById('reg_tch_phone').value.trim();
+                    const teacherData = {
+                        name: document.getElementById('reg_tch_name').value.trim(),
+                        phone: teacherPhone,
+                        subject: document.getElementById('reg_tch_subject').value.trim(),
+                        password: document.getElementById('reg_tch_password').value.trim(),
+                        status: 'pending'
+                    };
+
+                    const { error } = await _supabase.from('teachers').insert([teacherData]);
+                    if (error) { 
+                        alert("خطأ في تسجيل المعلم: " + error.message); 
+                    } else {
+                        alert("تم تسجيل حساب المعلم بنجاح! حسابك قيد المراجعة من الإدارة.");
+                        localStorage.setItem('currentTeacher', JSON.stringify(teacherData));
+                        window.location.href = 'pending.html';
+                    }
+                }
+            } 
+            // 3. معالجة تسجيل الدخول الفعلي المرن (طالب أو معلم)
+            else {
+                const phone = document.getElementById('log_phone').value.trim();
+                const password = document.getElementById('log_password').value.trim();
+
+                // أ. البحث في جدول الطلاب
+                const { data: studentsList } = await _supabase.from('students').select('*');
+                let student = null;
+
+                if (studentsList) {
+                    student = studentsList.find(s => {
+                        const matchesPhone = String(s.phone || '').trim() === phone || 
+                                             String(s.parent_phone || '').trim() === phone ||
+                                             String(s.student_phone || '').trim() === phone;
+                        
+                        const dbPass = String(s.password || s.student_code || s.parent_password || '').trim();
+                        const matchesPass = !dbPass || !password || dbPass === password;
+
+                        return matchesPhone && matchesPass;
+                    });
+                }
+
+                if (student) {
+                    localStorage.setItem('currentUser', JSON.stringify(student));
+                    localStorage.setItem('currentStudent', JSON.stringify(student));
+                    localStorage.setItem('user_phone', student.parent_phone || student.phone || phone);
+                    
+                    window.location.href = 'parent-dashboard.html';
+                    return;
+                }
+
+                // ب. البحث في جدول المعلمين
+                const { data: teachersList } = await _supabase.from('teachers').select('*');
+                let teacher = null;
+
+                if (teachersList) {
+                    teacher = teachersList.find(t => {
+                        const matchesPhone = String(t.phone || '').trim() === phone;
+                        const tPass = String(t.password || t.code || '').trim();
+                        const matchesPass = !tPass || !password || tPass === password;
+
+                        return matchesPhone && matchesPass;
+                    });
+                }
+
+                if (teacher) {
+                    localStorage.setItem('currentTeacher', JSON.stringify(teacher));
+                    
+                    const tStatus = teacher.status ? String(teacher.status).toLowerCase().trim() : 'active';
+                    if (tStatus === 'active' || tStatus === 'مفعل' || tStatus === 'true' || tStatus === '') {
+                        window.location.href = 'teacher-dashboard.html';
+                    } else {
+                        window.location.href = 'pending.html';
+                    }
+                    return;
+                }
+
+                alert("بيانات الدخول غير صحيحة، تأكد من رقم الهاتف والكود السري!");
+            }
+        }
+    </script>
+</body>
+</html>

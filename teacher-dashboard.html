@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المعلم | أكاديمية منهاج</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #062015;
+            --bg-card: #0a3322;
+            --primary-green: #10b981;
+            --accent-orange: #f59e0b;
+            --text-light: #ffffff;
+            --text-muted: #a7f3d0;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 780px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .report-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .report-title {
+            font-size: 19px;
+            font-weight: 900;
+            color: var(--primary-green);
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 11px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary-green);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            height: 90px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--primary-green);
+            border: none;
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 5px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-submit:hover {
+            background: #059669;
+        }
+
+        input[type="file"] {
+            font-size: 12px;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: var(--primary-green);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+        }
+
+        @media (max-width: 650px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .report-card {
+                padding: 15px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة الانتظار وقيد المراجعة -->
+    <div id="pending_screen" style="display: none;" class="w-full max-w-lg">
+        <div class="report-card text-center" style="padding: 40px 25px; text-align: center;">
+            <div style="font-size: 55px; margin-bottom: 15px;">⏳</div>
+            <h2 style="color: var(--accent-orange); font-size: 24px; font-weight: 900; margin-bottom: 15px;">قيد المراجعة والتفعيل</h2>
+            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.8; margin-bottom: 30px;">
+                تم استلام طلب تسجيلك بنجاح وحفظ الكود الخاص بك! لم يتم اكتمال تفعيل بيانات حسابك من قبل إدارة الأكاديمية بعد. يرجى الانتظار لحين مراجعة البيانات واستكمال تفاصيل الاشتراك.
+            </p>
+            <button onclick="logoutTeacher()" style="background: var(--primary-green); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: 0.3s;">العودة لتسجيل الدخول</button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم الكاملة للمعلم -->
+    <div id="dashboard_screen" class="dashboard-container" style="display: none;">
+
+        <!-- شريط علوي ترحبي مع زر خروج -->
+        <div class="report-card" style="padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 13px; color: var(--text-muted);">مرحباً بك يا معلمنا الفاضل:</span>
+                <h3 id="top_teacher_name" style="color: var(--primary-green); font-size: 16px; font-weight: 900;"></h3>
+            </div>
+            <button onclick="logoutTeacher()" style="background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid #f87171; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">تسجيل الخروج</button>
+        </div>
+
+        <!-- القسم الأول: تقرير الحصة اليومي -->
+        <div class="report-card">
+            <div class="report-title">📝 تقرير الحصة اليومي للطالب</div>
+
+            <form onsubmit="submitReport(event)">
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label>تاريخ الحصة</label>
+                        <input type="date" id="lesson_date" required onchange="autoSetDay()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>اليوم</label>
+                        <input type="text" id="lesson_day" readonly placeholder="مثال: الأحد" style="background: rgba(255,255,255,0.05);">
+                    </div>
+
+                    <div class="form-group">
+                        <label>اختر الطالب (من مجموعتك)</label>
+                        <select id="student_select" required>
+                            <option value="">جاري تحميل طلابك...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>حالة الحضور</label>
+                        <select id="attendance_status">
+                            <option value="حضر">✅ حضر في الموعد</option>
+                            <option value="غائب بعذر">⚠️ غائب بعذر</option>
+                            <option value="غائب بدون عذر">❌ غائب بدون عذر</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>التقييم العام (من 5)</label>
+                        <select id="rating" required>
+                            <option value="5">ممتاز (5) ⭐⭐⭐⭐⭐</option>
+                            <option value="4">جيد جداً (4) ⭐⭐⭐⭐</option>
+                            <option value="3">جيد (3) ⭐⭐⭐</option>
+                            <option value="2">مقبول (2) ⭐⭐</option>
+                            <option value="1">ضعيف (1) ⭐</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>مقدار الحفظ الجديد</label>
+                        <input type="text" id="new_mem" placeholder="مثال: سورة البقرة من 1 إلى 15" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>مقدار المراجعة</label>
+                        <input type="text" id="revision" placeholder="مثال: جزء عم كاملاً" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>الواجب المطلوب للحصة القادمة</label>
+                    <input type="text" id="homework" placeholder="مثال: حفظ ص 15 + تسجيل مقطع صوتي" required>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات المعلم / توجيهات لولي الأمر</label>
+                    <textarea id="teacher_notes" placeholder="اكتب ملاحظاتك عن أداء الطالب وتجويده ومستوى التركيز..."></textarea>
+                </div>
+
+                <button type="submit" id="btn_save" class="btn-submit">حفظ التقرير وإرساله لمنصة ولي الأمر</button>
+            </form>
+        </div>
+
+        <!-- القسم الثاني: رفع فيديو تعليمي للطالب -->
+        <div class="report-card">
+            <div class="report-title">🎬 رفع فيديو أو درس تعليمي للطالب</div>
+
+            <form onsubmit="teacherUploadVideo(event)">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>نشر الفيديو إلى</label>
+                        <select id="video_target_type" onchange="toggleStudentTarget(this.value)" required>
+                            <option value="specific">👤 طالب معين (من مجموعتي)</option>
+                            <option value="all_my_group">🌐 جميع طلاب مجموعتي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="video_student_box">
+                        <label>اختر الطالب المستهدف</label>
+                        <select id="video_student_select">
+                            <option value="">اختر اسم الطالب...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>عنوان الفيديو أو الدرس</label>
+                    <input type="text" id="video_title" placeholder="مثال: شرح أحكام الميم الساكنة مع التطبيق" required>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>اختر ملف الفيديو من جهازك</label>
+                        <input type="file" id="video_file" accept="video/*" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>تاريخ انتهاء صلاحية العرض</label>
+                        <input type="date" id="video_expiry" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn_upload_video" class="btn-submit">رفع الفيديو ونشره للمنصة مباشرة</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://rihnbystzsxwfrdabcxa.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_81So_0s9ttAS-SmJ6Ff0jQ_UaurIrNE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const daysArabic = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+        let currentTeacherName = '';
+
+        window.onload = async function() {
+            // قراءة بيانات المعلم المخزنة بشكل آمن سواء من currentTeacher أو teacher_name
+            let teacherObj = null;
+            try {
+                teacherObj = JSON.parse(localStorage.getItem('currentTeacher'));
+            } catch(e) {}
+
+            if (!teacherObj || !teacherObj.name) {
+                currentTeacherName = localStorage.getItem('teacher_name') || '';
+            } else {
+                currentTeacherName = teacherObj.name;
+            }
+
+            if (!currentTeacherName) {
+                document.getElementById('pending_screen').style.display = 'block';
+                document.getElementById('dashboard_screen').style.display = 'none';
+                return;
+            }
+
+            // التحقق المرن من حالة المعلم في قاعدة البيانات
+            const { data: teacherData, error: teacherErr } = await _supabase
+                .from('teachers')
+                .select('*')
+                .eq('name', currentTeacherName)
+                .maybeSingle();
+
+            // لو مش موجود بالاسم تماماً، نبحث بالهاتف لو متوفر في الكائن المخزن
+            let isValidActive = false;
+            if (teacherData) {
+                const tStatus = teacherData.status ? teacherData.status.toLowerCase().trim() : '';
+                if (tStatus === 'active' || tStatus === 'مفعل' || tStatus === 'true') {
+                    isValidActive = true;
+                }
+            } else if (teacherObj && teacherObj.phone) {
+                const { data: teacherByPhone } = await _supabase
+                    .from('teachers')
+                    .select('*')
+                    .eq('phone', teacherObj.phone)
+                    .maybeSingle();
+                
+                if (teacherByPhone) {
+                    const tStatus = teacherByPhone.status ? teacherByPhone.status.toLowerCase().trim() : '';
+                    if (tStatus === 'active' || tStatus === 'مفعل' || tStatus === 'true') {
+                        isValidActive = true;
+                        currentTeacherName = teacherByPhone.name; // تحديث بالاسم الصحيح من قاعدة البيانات
+                    }
+                }
+            }
+
+            if (!isValidActive) {
+                // الحساب غير مفعل أو قيد المراجعة
+                document.getElementById('pending_screen').style.display = 'block';
+                document.getElementById('dashboard_screen').style.display = 'none';
+                return;
+            }
+
+            // الحساب مفعل بنجاح وعرض لوحة التحكم
+            document.getElementById('pending_screen').style.display = 'none';
+            document.getElementById('dashboard_screen').style.display = 'flex';
+            document.getElementById('top_teacher_name').textContent = currentTeacherName;
+
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('lesson_date').value = dateStr;
+            autoSetDay();
+
+            // جلب طلاب هذا المعلم فقط
+            loadMyStudents(currentTeacherName);
+        };
+
+        function autoSetDay() {
+            const dateVal = document.getElementById('lesson_date').value;
+            if(dateVal) {
+                const dayIndex = new Date(dateVal).getDay();
+                document.getElementById('lesson_day').value = daysArabic[dayIndex];
+            }
+        }
+
+        async function loadMyStudents(teacherName) {
+            const select1 = document.getElementById('student_select');
+            const select2 = document.getElementById('video_student_select');
+            
+            const { data, error } = await _supabase
+                .from('students')
+                .select('name')
+                .eq('teacher_name', teacherName)
+                .order('name', { ascending: true });
+
+            if (error) {
+                console.error("خطأ في جلب الطلاب:", error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                let options = '<option value="">اختر اسم الطالب...</option>';
+                data.forEach(student => {
+                    options += `<option value="${student.name}">${student.name}</option>`;
+                });
+                select1.innerHTML = options;
+                select2.innerHTML = options;
+            } else {
+                select1.innerHTML = '<option value="">لا توجد طلاب مسجلين في مجموعتك حالياً</option>';
+                select2.innerHTML = '<option value="">لا توجد طلاب مسجلين في مجموعتك حالياً</option>';
+            }
+        }
+
+        function toggleStudentTarget(value) {
+            const box = document.getElementById('video_student_box');
+            if (value === 'all_my_group') {
+                box.style.display = 'none';
+            } else {
+                box.style.display = 'block';
+            }
+        }
+
+        async function submitReport(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn_save');
+            
+            const reportData = {
+                teacher_name: currentTeacherName,
+                student_name: document.getElementById('student_select').value,
+                lesson_date: document.getElementById('lesson_date').value,
+                lesson_day: document.getElementById('lesson_day').value,
+                rating: document.getElementById('rating').value,
+                new_memorization: document.getElementById('new_mem').value,
+                revision: document.getElementById('revision').value,
+                homework: document.getElementById('homework').value,
+                teacher_notes: document.getElementById('teacher_notes').value + " [" + document.getElementById('attendance_status').value + "]"
+            };
+
+            btn.disabled = true;
+            btn.textContent = "جاري حفظ التقرير...";
+
+            const { error } = await _supabase.from('evaluations').insert([reportData]);
+
+            if (error) {
+                alert("حدث خطأ أثناء حفظ التقرير: " + error.message);
+            } else {
+                alert("تم حفظ وتوثيق التقرير اليومي بنجاح! ✅");
+                e.target.reset();
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('lesson_date').value = today;
+                autoSetDay();
+            }
+
+            btn.disabled = false;
+            btn.textContent = "حفظ التقرير وإرساله لمنصة ولي الأمر";
+        }
+
+        async function teacherUploadVideo(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn_upload_video');
+            const targetType = document.getElementById('video_target_type').value;
+            const studentName = targetType === 'all_my_group' ? 'جميع طلاب المجموعة' : document.getElementById('video_student_select').value;
+            const fileInput = document.getElementById('video_file').files[0];
+            const expiryDate = document.getElementById('video_expiry').value;
+
+            if (targetType === 'specific' && !studentName) {
+                alert('يرجى اختيار اسم الطالب المخصص!');
+                return;
+            }
+
+            if (!fileInput) {
+                alert("يرجى تحديد ملف الفيديو أولاً!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "جاري رفع الفيديو إلى السيرفر...";
+
+            try {
+                const fileExt = fileInput.name.split('.').pop().toLowerCase();
+                const fileName = `vid_${Date.now ? Date.now() : new Date().getTime()}.${fileExt}`;
+
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('videos')
+                    .upload(fileName, fileInput);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = _supabase.storage.from('videos').getPublicUrl(fileName);
+
+                const videoData = {
+                    teacher_name: currentTeacherName,
+                    assigned_student: studentName,
+                    title: document.getElementById('video_title').value,
+                    video_url: publicUrlData.publicUrl,
+                    expiry_date: expiryDate
+                };
+
+                const { error: dbError } = await _supabase.from('videos').insert([videoData]);
+                if (dbError) throw dbError;
+
+                alert("تم رفع ونشر الفيديو بنجاح! ✅");
+                e.target.reset();
+
+            } catch (err) {
+                alert("حدث خطأ أثناء رفع الفيديو: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "رفع الفيديو ونشره للمنصة مباشرة";
+            }
+        }
+
+        function logoutTeacher() {
+            localStorage.removeItem('currentTeacher');
+            localStorage.removeItem('teacher_name');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

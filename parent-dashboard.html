@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الطالب وولي الأمر | أكاديمية منهاج</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #062015;
+            --bg-card: #0a3322;
+            --primary-green: #10b981;
+            --text-light: #ffffff;
+            --text-muted: #a7f3d0;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); min-height: 100vh; padding: 15px 10px; }
+        .container { width: 100%; max-width: 900px; margin: 0 auto; }
+        .header-bar { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .user-info h3 { font-size: 18px; font-weight: 900; color: var(--primary-green); }
+        .user-info p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+        .btn-logout { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-logout:hover { background: #ef4444; color: white; }
+        .info-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .info-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 14px 10px; border-radius: 12px; text-align: center; }
+        .info-card .title { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .info-card .val { font-size: 16px; font-weight: 800; color: var(--primary-green); }
+        .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px 10px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary-green); color: #ffffff; border-color: var(--primary-green); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+        .video-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .video-card video { width: 100%; height: 160px; background: #000; object-fit: cover; }
+        .video-body { padding: 12px; }
+        .video-body h4 { font-size: 14px; color: white; margin-bottom: 8px; }
+        .report-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        @media (max-width: 650px) { .info-cards { grid-template-columns: 1fr; } .tabs-nav { flex-direction: column; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-bar">
+            <div class="user-info">
+                <h3 id="dispStudentName">🎓 الطالب: جاري التحميل...</h3>
+                <p>ولي الأمر: <span id="dispParentName">---</span> | المعلم: <span id="dispTeacherName">---</span></p>
+            </div>
+            <button class="btn-logout" onclick="logout()">تسجيل الخروج 🚪</button>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <div class="title">مدة الحصة</div>
+                <div class="val" id="dispDuration">--</div>
+            </div>
+            <div class="info-card">
+                <div class="title">عدد الحصص شهرياً</div>
+                <div class="val" id="dispSessions">-- حصص</div>
+            </div>
+            <div class="info-card">
+                <div class="title">الاشتراك الشهري</div>
+                <div class="val" id="dispFee">-- ج.م</div>
+            </div>
+        </div>
+
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('videos', this)">🎬 الدروس والفيديوهات</button>
+            <button class="tab-btn" onclick="switchTab('reports', this)">📝 التقارير والملاحظات</button>
+        </div>
+
+        <div id="tab-videos" class="tab-content active">
+            <div id="videosContainer" class="video-grid"></div>
+        </div>
+
+        <div id="tab-reports" class="tab-content">
+            <div id="reportsContainer">
+                <div class="report-box" style="text-align: center; color: var(--text-muted);">لا توجد تقارير مسجلة حتى الآن.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://rihnbystzsxwfrdabcxa.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_81So_0s9ttAS-SmJ6Ff0jQ_UaurIrNE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.onload = async function() {
+            try {
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    const student = JSON.parse(savedUser);
+                    displayStudentData(student);
+                    return;
+                }
+
+                const { data, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .order('id', { ascending: false })
+                    .limit(1);
+
+                if (error) {
+                    console.error("Supabase Error:", error);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    displayStudentData(data[0]);
+                } else {
+                    document.getElementById('dispStudentName').textContent = '⚠️ لم يتم العثور على بيانات الطالب';
+                }
+            } catch(err) {
+                console.error("JS Error:", err);
+            }
+        };
+
+        function displayStudentData(student) {
+            const studentName = student.name || 'غير معروف';
+            const parentName = student.parent_name || 'غير محدد';
+            const teacherName = student.teacher_name || student.teacher || 'ايمن صفوت نقادي احمد';
+            
+                // قراءة عمود "مدة الجلسة" من قاعدة البيانات وتحويله لشكل مفهوم
+            let rawDuration = student.مدة_الجلسة !== undefined ? student.مدة_الجلسة : (student.duration || 1);
+            let durationText = rawDuration == 1 ? 'ساعة واحدة' : (rawDuration == 0.5 ? 'نصف ساعة' : rawDuration + ' ساعة');
+
+            const sessionsVal = student.classes_count !== undefined ? student.classes_count : 12;
+            const feeVal = student.fees !== undefined && student.fees !== null ? student.fees : 500;
+
+            document.getElementById('dispStudentName').textContent = '🎓 الطالب: ' + studentName;
+            document.getElementById('dispParentName').textContent = parentName;
+            document.getElementById('dispTeacherName').textContent = teacherName;
+            
+            document.getElementById('dispDuration').textContent = durationText;
+            document.getElementById('dispSessions').textContent = sessionsVal + ' حصص';
+            document.getElementById('dispFee').textContent = feeVal + ' ج.م';
+
+            loadStudentVideos(studentName);
+            loadStudentReports(studentName);
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            btnElement.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        async function loadStudentVideos(studentName) {
+            const container = document.getElementById('videosContainer');
+            const { data } = await _supabase.from('videos').select('*').order('id', { ascending: false });
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس أو فيديوهات متاحة حالياً.</div>';
+                return;
+            }
+
+            const studentVideos = data.filter(v => v.target_type === 'all' || v.student_name === studentName);
+            if (studentVideos.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس مخصصة حالياً.</div>';
+                return;
+            }
+
+            container.innerHTML = studentVideos.map(v => `
+                <div class="video-card">
+                    <video controls controlsList="nodownload"><source src="${v.video_url}" type="video/mp4"></video>
+                    <div class="video-body">
+                        <h4>${v.title}</h4>
+                        <span style="font-size: 11px; color: var(--primary-green);">${v.target_type === 'specific' ? 'خاص بك 👤' : 'عام 🌐'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadStudentReports(studentName) {
+            const container = document.getElementById('reportsContainer');
+            try {
+                const { data } = await _supabase.from('reports').select('*').eq('student_name', studentName);
+                if (data && data.length > 0) {
+                    container.innerHTML = data.map(r => `
+                        <div class="report-box">
+                            <h4 style="color: var(--primary-green); margin-bottom: 8px;">📅 تقرير يوم: ${r.date || 'اليوم'}</h4>
+                            <p style="color: #fff; font-size: 13px;">${r.notes || r.report || ''}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {}
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

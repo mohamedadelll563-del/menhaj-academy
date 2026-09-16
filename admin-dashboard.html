@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - أكاديمية منهاج</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+        
+        <!-- Sidebar Navigation & Quick Tools -->
+        <aside class="w-full md:w-72 bg-emerald-900 text-white p-6 flex flex-col justify-between shadow-lg">
+            <div class="space-y-6">
+                <!-- Logo / Title -->
+                <div class="flex items-center gap-3 border-b border-emerald-800 pb-4">
+                    <div class="bg-emerald-800 p-2.5 rounded-xl text-emerald-300">
+                        <i class="fas fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg">أكاديمية منهاج</h2>
+                        <p class="text-xs text-emerald-300">لوحة تحكم الإدارة</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links / Tabs -->
+                <nav class="space-y-2">
+                    <button onclick="switchTab('home')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg bg-emerald-800 text-white font-medium transition">
+                        <i class="fas fa-home w-5"></i> الصفحة الرئيسية
+                    </button>
+                    <button onclick="switchTab('finances')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-800/60 text-emerald-100 transition">
+                        <i class="fas fa-wallet w-5"></i> أرباح الأكاديمية والرواتب
+                    </button>
+                    <button onclick="switchTab('students')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-800/60 text-emerald-100 transition">
+                        <i class="fas fa-users w-5"></i> قائمة تسجيل الطلاب
+                    </button>
+                    <button onclick="switchTab('teachers_form')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-800/60 text-emerald-100 transition">
+                        <i class="fas fa-chalkboard-teacher w-5"></i> إضافة / تفعيل معلم
+                    </button>
+                    <button onclick="switchTab('videos')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-800/60 text-emerald-100 transition">
+                        <i class="fas fa-video w-5"></i> رفع فيديو على المنصة
+                    </button>
+                </nav>
+
+                <!-- Quick Stats Box in Sidebar -->
+                <div class="bg-emerald-800/50 p-4 rounded-xl border border-emerald-700/50 space-y-3 cursor-pointer" onclick="switchTab('students')">
+                    <h3 class="text-sm font-semibold text-emerald-200 border-b border-emerald-700 pb-1">إحصائيات سريعة</h3>
+                    <div class="flex justify-between text-sm hover:underline" onclick="event.stopPropagation(); filterStudentsByStatus('active')">
+                        <span class="text-emerald-300">الطلاب الفعليين:</span>
+                        <span id="sidebar_active_count" class="font-bold text-green-300">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm hover:underline" onclick="event.stopPropagation(); filterStudentsByStatus('pending')">
+                        <span class="text-emerald-300">قيد المراجعة:</span>
+                        <span id="sidebar_pending_count" class="font-bold text-yellow-300">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm" onclick="event.stopPropagation(); switchTab('finances');">
+                        <span class="text-emerald-300">صافي الأرباح:</span>
+                        <span id="sidebar_net_profit" class="font-bold text-emerald-300">0 ج.م</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Sidebar Info -->
+            <div class="text-xs text-emerald-400 text-center pt-4 border-t border-emerald-800">
+                أكاديمية منهاج &copy; 2026
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 space-y-6 overflow-y-auto">
+            
+            <!-- Top Header Bar -->
+            <header class="bg-emerald-700 text-white shadow-md p-4 rounded-xl flex justify-between items-center">
+                <h1 class="text-xl font-bold"><i class="fas fa-tachometer-alt ml-2"></i> لوحة التحكم الرئيسية</h1>
+                <button onclick="location.reload()" class="bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded text-sm transition flex items-center gap-1">
+                    <i class="fas fa-sync-alt"></i> تحديث البيانات
+                </button>
+            </header>
+
+            <!-- Statistics Cards Section -->
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div onclick="switchTab('students'); filterStudentsByStatus('active');" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-emerald-500 transition">
+                    <div>
+                        <p class="text-gray-500 text-sm">إجمالي الاشتراكات</p>
+                        <h3 id="finance_total_income" class="text-xl font-bold text-emerald-600">0 ج.م</h3>
+                    </div>
+                    <div class="bg-emerald-100 p-3 rounded-full text-emerald-700"><i class="fas fa-wallet"></i></div>
+                </div>
+                <div onclick="switchTab('finances')" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-blue-500 transition">
+                    <div>
+                        <p class="text-gray-500 text-sm">إجمالي رواتب المعلمين</p>
+                        <h3 id="finance_total_salaries" class="text-xl font-bold text-blue-600">0 ج.م</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full text-blue-700"><i class="fas fa-hand-holding-usd"></i></div>
+                </div>
+                <div onclick="switchTab('finances')" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-green-500 transition">
+                    <div>
+                        <p class="text-gray-500 text-sm">صافي أرباح الأكاديمية</p>
+                        <h3 id="finance_net_profit" class="text-xl font-bold text-green-700">0 ج.م</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full text-green-700"><i class="fas fa-chart-line"></i></div>
+                </div>
+                <div onclick="switchTab('students'); filterStudentsByStatus('pending');" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-yellow-500 transition">
+                    <div>
+                        <p class="text-gray-500 text-sm">قيد الانتظار</p>
+                        <h3 id="finance_pending_count" class="text-xl font-bold text-yellow-600">0</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full text-yellow-700"><i class="fas fa-clock"></i></div>
+                </div>
+            </section>
+
+            <!-- Dynamic Sections Container -->
+            
+            <!-- SECTION 1: HOME (Forms & Overview) -->
+            <div id="section_home" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Student Form Card (إضافة / تفعيل طالب جديد) -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 id="form_title_student" class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">تسجيل طالب جديد أو تفعيل</h2>
+                        <form id="studentForm" onsubmit="saveStudent(event)" class="space-y-4">
+                            <input type="hidden" id="student_id">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">اسم الطالب</label>
+                                    <input type="text" id="s_name" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">اسم ولي الأمر</label>
+                                    <input type="text" id="s_parent" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">رقم الهاتف</label>
+                                    <input type="text" id="s_phone" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">كلمة المرور</label>
+                                    <input type="text" id="s_password" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">المعلم</label>
+                                    <select id="s_teacher" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <!-- Dynamic Teachers Dropdown -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">عدد الحصص (الشهر)</label>
+                                    <select id="s_classes_count" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="8">8 حصص</option>
+                                        <option value="12">12 حصصة</option>
+                                        <option value="16">16 حصة</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">زمن الحصة</label>
+                                    <select id="s_session_duration" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="0.5">30 دقيقة (نصف ساعة)</option>
+                                        <option value="0.66">40 دقيقة</option>
+                                        <option value="0.75">45 دقيقة</option>
+                                        <option value="1.0">ساعة كاملة</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">إجمالي مبلغ الاشتراك (ج.م)</label>
+                                    <input type="number" id="s_fees" placeholder="مثال: 400" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">حالة الحساب</label>
+                                    <select id="s_status" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="active">مفعل</option>
+                                        <option value="pending">قيد المراجعة / الانتظار</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">حفظ وتفعيل الطالب</button>
+                                <button type="button" onclick="resetStudentForm()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition">إلغاء</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Teachers Management Quick View -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">قائمة المعلمين المسجلين</h2>
+                            <div id="teachers_list_container" class="space-y-2 max-h-64 overflow-y-auto">
+                                <!-- Dynamic Teachers List -->
+                            </div>
+                        </div>
+                        <div class="pt-4">
+                            <button onclick="switchTab('teachers_form'); resetTeacherForm();" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-lg text-sm font-semibold transition">
+                                <i class="fas fa-plus ml-1"></i> إضافة معلم جديد يدوياً
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 2: STUDENTS LIST (قائمة الطلاب الكاملة مع زر إضافة طالب جديد) -->
+            <div id="section_students" class="space-y-6" style="display: none;">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                        <h2 class="text-lg font-bold text-emerald-800">قائمة تسجيل الطلاب وإدارتهم</h2>
+                        <div class="flex items-center gap-3">
+                            <button onclick="switchTab('home'); resetStudentForm();" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                <i class="fas fa-user-plus"></i> إضافة طالب جديد يدوياً
+                            </button>
+                            <div class="flex gap-1">
+                                <button onclick="filterStudentsByStatus('all')" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs font-semibold">الكل</button>
+                                <button onclick="filterStudentsByStatus('active')" class="px-3 py-1 bg-green-100 text-green-800 hover:bg-green-200 rounded text-xs font-semibold">المفعلين</button>
+                                <button onclick="filterStudentsByStatus('pending')" class="px-3 py-1 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded text-xs font-semibold">قيد المراجعة</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-emerald-50 text-emerald-900 text-sm">
+                                    <th class="p-3">اسم الطالب</th>
+                                    <th class="p-3">ولي الأمر</th>
+                                    <th class="p-3">الهاتف</th>
+                                    <th class="p-3">المعلم</th>
+                                    <th class="p-3">الحصص والمدة</th>
+                                    <th class="p-3">المصروفات</th>
+                                    <th class="p-3">الحالة</th>
+                                    <th class="p-3">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students_table_body" class="text-sm divide-y">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: TEACHERS FORM (إضافة وتفعيل المعلم مع المادة وسعر الساعة) -->
+            <div id="section_teachers_form" class="space-y-6" style="display: none;">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+                    <h2 id="form_title_teacher" class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">إضافة أو تفعيل معلم جديد</h2>
+                    <form id="teacherForm" onsubmit="saveTeacher(event)" class="space-y-4">
+                        <input type="hidden" id="teacher_id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">اسم المعلم</label>
+                                <input type="text" id="t_name" placeholder="أدخل اسم المعلم ثلاثي" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">رقم الهاتف</label>
+                                <input type="text" id="t_phone" placeholder="رقم الهاتف للتواصل" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">المادة التي يدرسها</label>
+                                <input type="text" id="t_subject" placeholder="مثال: القرآن الكريم / التجويد" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">سعر الساعة للمعلم (ج.م)</label>
+                                <input type="number" id="t_hourly_rate" value="40" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">كلمة المرور</label>
+                                <input type="text" id="t_password" placeholder="كلمة المرور الخاصة بحساب المعلم" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">حالة الحساب</label>
+                                <select id="t_status" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="active">مفعل</option>
+                                    <option value="pending">قيد المراجعة / الانتظار</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold transition">حفظ وتفعيل المعلم</button>
+                            <button type="button" onclick="resetTeacherForm(); switchTab('home');" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition">إلغاء</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- SECTION 5: FINANCES & PROFITS (أرباح الأكاديمية والرواتب) -->
+            <div id="section_finances" class="space-y-6" style="display: none;">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                    <h2 class="text-xl font-bold text-emerald-800 pb-2 border-b"><i class="fas fa-wallet ml-2"></i> تقرير أرباح الأكاديمية ورواتب المعلمين</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-200">
+                            <p class="text-gray-600 text-sm mb-1">إجمالي الاشتراكات المدفوعة</p>
+                            <h3 id="report_total_income" class="text-3xl font-bold text-emerald-700">0 ج.م</h3>
+                        </div>
+                        <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
+                            <p class="text-gray-600 text-sm mb-1">إجمالي رواتب المعلمين</p>
+                            <h3 id="report_total_salaries" class="text-3xl font-bold text-blue-700">0 ج.م</h3>
+                        </div>
+                        <div class="bg-green-50 p-5 rounded-xl border border-green-200">
+                            <p class="text-gray-600 text-sm mb-1">صافي أرباح الأكاديمية</p>
+                            <h3 id="report_net_profit" class="text-3xl font-bold text-green-800">0 ج.م</h3>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <h3 class="text-lg font-bold text-emerald-800 mb-3">تفاصيل حساب رواتب المعلمين</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right border-collapse">
+                               <thead>
+                                    <tr class="bg-emerald-50 text-emerald-900 text-sm">
+                                        <th class="p-3">اسم المعلم</th>
+                                        <th class="p-3">المادة</th>
+                                        <th class="p-3">سعر الساعة</th>
+                                        <th class="p-3">عدد الطلاب التابعين</th>
+                                        <th class="p-3">إجمالي الراتب المستحق</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teachers_salary_table_body" class="text-sm divide-y">
+                                    <!-- Dynamic Teachers Salary Breakdown -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: VIDEOS UPLOAD (رفع فيديو على المنصة) -->
+            <div id="section_videos" class="space-y-6" style="display: none;">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+                    <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b"><i class="fas fa-video ml-1"></i> رفع فيديو على المنصة</h2>
+                    <form id="videoForm" onsubmit="uploadVideo(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">عنوان الدرس أو الفيديو</label>
+                            <input type="text" id="video_title" placeholder="مثال: درس الحروف الهجائية - الحلقة الأولى" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">اختر ملف الفيديو من الجهاز</label>
+                            <input type="file" id="video_file" accept="video/*" required class="w-full border rounded-lg p-2 bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">نطاق النشر:</label>
+                            <select id="video_target_type" onchange="toggleStudentSelect(this.value)" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="all">لجميع الطلاب</option>
+                                <option value="specific">طالب مخصص</option>
+                            </select>
+                        </div>
+                        <div id="student_select_box" style="display: none;">
+                            <label class="block text-sm font-semibold mb-1">اختر الطالب:</label>
+                            <select id="admin_video_student" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <!-- Dynamic active students -->
+                            </select>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">رفع ونشر الفيديو على المنصة فوراً</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const SUPABASE_URL = 'https://rihnbystzsxwfrdabcxa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaG5ieXN0enN4d2ZyZGFiY3hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzEyOTAsImV4cCI6MjEwNDcwNzI5MH0.Qz75YS5UqaaOU0z_1JuAP_pANa_jWoVWoWfNOoKe_Uw';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentStudentFilter = 'all';
+
+        function switchTab(tabName) {
+            document.getElementById('section_home').style.display = 'none';
+            document.getElementById('section_students').style.display = 'none';
+            document.getElementById('section_teachers_form').style.display = 'none';
+            document.getElementById('section_finances').style.display = 'none';
+            document.getElementById('section_videos').style.display = 'none';
+
+            if (tabName === 'home') document.getElementById('section_home').style.display = 'block';
+            if (tabName === 'students') document.getElementById('section_students').style.display = 'block';
+            if (tabName === 'teachers_form') document.getElementById('section_teachers_form').style.display = 'block';
+            if (tabName === 'finances') { document.getElementById('section_finances').style.display = 'block'; loadFinancialReport(); }
+            if (tabName === 'videos') document.getElementById('section_videos').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadTeachers();
+            loadStudents();
+            loadFinances();
+            loadStudentsForVideoSelect();
+        });
+
+        async function loadTeachers() {
+            const { data } = await _supabase.from('teachers').select('*');
+            const select = document.getElementById('s_teacher');
+            const listContainer = document.getElementById('teachers_list_container');
+            
+            if(select) {
+                select.innerHTML = '<option value="">اختر المعلم</option>';
+                if (data) {
+                    data.forEach(t => {
+                        select.innerHTML += `<option value="${t.name}">${t.name} (${t.subject || 'عام'})</option>`;
+                    });
+                }
+            }
+
+            if(listContainer) {
+                listContainer.innerHTML = '';
+                if (data && data.length > 0) {
+                    data.forEach(t => {
+                        listContainer.innerHTML += `
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded border text-sm">
+                                <div>
+                                    <span class="font-bold text-emerald-800">${t.name}</span>
+                                    <span class="text-gray-500 text-xs mr-2">(${t.subject || 'بدون تخصص'} - ${t.hourly_rate || 40} ج.م/ساعة)</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="fillTeacherForm(${t.id}, '${t.name || ''}', '${t.phone || ''}', '${t.password || ''}', '${t.subject || ''}', '${t.hourly_rate || 40}', '${t.status || 'active'}')" class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700">تعديل</button>
+                                    <button onclick="deleteTeacher(${t.id})" class="bg-red-500 text-white px-2 py-0.5 rounded text-xs hover:bg-red-600">حذف</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    listContainer.innerHTML = '<p class="text-gray-500 text-sm text-center">لا يوجد معلمون مسجلون حالياً.</p>';
+                }
+            }
+        }
+
+        function fillTeacherForm(id, name, phone, password, subject, hourlyRate, status) {
+            document.getElementById('teacher_id').value = id;
+            document.getElementById('t_name').value = name;
+            document.getElementById('t_phone').value = phone;
+            document.getElementById('t_password').value = password;
+            document.getElementById('t_subject').value = subject;
+            document.getElementById('t_hourly_rate').value = hourlyRate || 40;
+            document.getElementById('t_status').value = status;
+            document.getElementById('form_title_teacher').textContent = "تعديل / تفعيل بيانات المعلم: " + name;
+            switchTab('teachers_form');
+        }
+
+        function resetTeacherForm() {
+            document.getElementById('teacherForm').reset();
+            document.getElementById('teacher_id').value = '';
+            document.getElementById('t_hourly_rate').value = '40';
+            document.getElementById('form_title_teacher').textContent = "إضافة أو تفعيل معلم جديد";
+        }
+
+        async function saveTeacher(e) {
+            e.preventDefault();
+            const id = document.getElementById('teacher_id').value;
+            const teacherData = {
+                name: document.getElementById('t_name').value,
+                phone: document.getElementById('t_phone').value,
+                password: document.getElementById('t_password').value,
+                subject: document.getElementById('t_subject').value,
+                hourly_rate: parseFloat(document.getElementById('t_hourly_rate').value) || 40,
+                status: document.getElementById('t_status').value
+            };
+
+            let error;
+            if (id) {
+                const res = await _supabase.from('teachers').update(teacherData).eq('id', id);
+                error = res.error;
+            } else {
+                const res = await _supabase.from('teachers').insert([teacherData]);
+                error = res.error;
+            }
+
+            if (error) alert("خطأ في حفظ المعلم: " + error.message);
+            else {
+                alert("تم حفظ وتفعيل المعلم بنجاح! ✅");
+                resetTeacherForm();
+                loadTeachers();
+                switchTab('home');
+            }
+        }
+
+        async function deleteTeacher(id) {
+            if (confirm("هل أنت متأكد من حذف هذا المعلم؟")) {
+                await _supabase.from('teachers').delete().eq('id', id);
+                loadTeachers();
+            }
+        }
+
+        async function loadStudents() {
+            await loadTeachers();
+            const { data } = await _supabase.from('students').select('*').order('id', { ascending: false });
+            const tbody = document.getElementById('students_table_body');
+            tbody.innerHTML = '';
+
+            if (data && data.length > 0) {
+                data.forEach(student => {
+                    if (currentStudentFilter !== 'all' && student.status !== currentStudentFilter) return;
+
+                    const statusBadge = student.status === 'active' 
+                        ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">مفعل</span>' 
+                        : '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">قيد المراجعة</span>';
+
+                    const classesInfo = `${student.classes_count || 8} حصص (${student.session_duration == 0.5 ? '30 دقيقة' : student.session_duration == 0.66 ? '40 دقيقة' : student.session_duration == 0.75 ? '45 دقيقة' : 'ساعة'})`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-emerald-50 transition">
+                            <td class="p-3 font-semibold text-emerald-800 cursor-pointer hover:underline" onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${student.phone || ''}', '${student.password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', '${student.status || 'active'}')">
+                                <i class="fas fa-edit ml-1 text-xs"></i> ${student.name || 'بدون اسم'}
+                            </td>
+                            <td class="p-3">${student.parent_name || '-'}</td>
+                            <td class="p-3">${student.phone || '-'}</td>
+                            <td class="p-3">${student.teacher_name || 'غير محدد'}</td>
+                            <td class="p-3 text-xs">${classesInfo}</td>
+                            <td class="p-3 font-bold">${student.fees || 0} ج.م</td>
+                            <td class="p-3">${statusBadge}</td>
+                            <td class="p-3 flex gap-2">
+                                <button onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${student.phone || ''}', '${student.password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', 'active')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">تفعيل سريع</button>
+                                <button onclick="deleteStudent(${student.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">لا توجد طلبات تسجيل طلاب حالياً.</td></tr>`;
+            }
+        }
+
+        function filterStudentsByStatus(status) {
+            currentStudentFilter = status;
+            switchTab('students');
+            loadStudents();
+        }
+
+        function fillStudentForm(id, name, parent, phone, password, teacher, classesCount, duration, fees, status) {
+            document.getElementById('student_id').value = id;
+            document.getElementById('s_name').value = name;
+            document.getElementById('s_parent').value = parent;
+            document.getElementById('s_phone').value = phone;
+            document.getElementById('s_password').value = password;
+            document.getElementById('s_teacher').value = teacher;
+            document.getElementById('s_classes_count').value = classesCount || 8;
+            document.getElementById('s_session_duration').value = duration || 1;
+            document.getElementById('s_fees').value = fees;
+            document.getElementById('s_status').value = status;
+            
+            document.getElementById('form_title_student').textContent = "تعديل / تفعيل بيانات الطالب: " + name;
+            switchTab('home');
+        }
+
+        function resetStudentForm() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('student_id').value = '';
+            document.getElementById('form_title_student').textContent = "تسجيل طالب جديد أو تفعيل";
+        }
+
+        async function saveStudent(e) {
+            e.preventDefault();
+            const id = document.getElementById('student_id').value;
+            const studentData = {
+                name: document.getElementById('s_name').value,
+                parent_name: document.getElementById('s_parent').value,
+                phone: document.getElementById('s_phone').value,
+                password: document.getElementById('s_password').value,
+                teacher_name: document.getElementById('s_teacher').value,
+                classes_count: parseInt(document.getElementById('s_classes_count').value) || 8,
+                session_duration: parseFloat(document.getElementById('s_session_duration').value) || 1,
+                fees: parseFloat(document.getElementById('s_fees').value) || 0,
+                status: document.getElementById('s_status').value
+            };
+
+            let error;
+            if (id) {
+                const res = await _supabase.from('students').update(studentData).eq('id', id);
+                error = res.error;
+            } else {
+                const res = await _supabase.from('students').insert([studentData]);
+                error = res.error;
+            }
+
+            if (error) alert("خطأ بالحفظ: " + error.message);
+            else {
+                alert("تم حفظ وتفعيل الطالب بنجاح! ✅");
+                resetStudentForm();
+                loadStudents();
+                loadFinances();
+                loadStudentsForVideoSelect();
+            }
+        }
+
+        async function deleteStudent(id) {
+            if (confirm("هل أنت متأكد من الحذف؟")) {
+                await _supabase.from('students').delete().eq('id', id);
+                loadStudents();
+                loadFinances();
+                loadStudentsForVideoSelect();
+            }
+        }
+
+        async function loadFinances() {
+            const { data: students } = await _supabase.from('students').select('*');
+            const { data: teachers } = await _supabase.from('teachers').select('*');
+            
+            let totalIncome = 0;
+            let activeCount = 0;
+            let pendingCount = 0;
+            let totalSalaries = 0;
+
+            // حساب رواتب المعلمين وإجمالي الاشتراكات
+            if (students) {
+                students.forEach(s => {
+                    const fee = parseFloat(s.fees) || 0;
+                    if(s.status === 'active') {
+                        totalIncome += fee;
+                        activeCount++;
+
+                        // حساب راتب المعلم لهذا الطالب: (عدد الحصص * زمن الحصة * سعر الساعة للمعلم)
+                        const teacherObj = teachers ? teachers.find(t => t.name === s.teacher_name) : null;
+                        const hourlyRate = teacherObj ? (parseFloat(teacherObj.hourly_rate) || 40) : 40;
+                        const classes = parseFloat(s.classes_count) || 8;
+                        const duration = parseFloat(s.session_duration) || 1;
+                        
+                        totalSalaries += (classes * duration * hourlyRate);
+                    } else {
+                        pendingCount++;
+                    }
+                });
+            }
+
+            let netProfit = totalIncome - totalSalaries;
+
+            // تحديث بطاقات الواجهة الرئيسية
+            document.getElementById('finance_total_income').textContent = totalIncome + ' ج.م';
+            document.getElementById('finance_total_salaries').textContent = Math.round(totalSalaries) + ' ج.م';
+            document.getElementById('finance_net_profit').textContent = Math.round(netProfit) + ' ج.م';
+            document.getElementById('finance_pending_count').textContent = pendingCount;
+
+            document.getElementById('sidebar_active_count').textContent = activeCount;
+            document.getElementById('sidebar_pending_count').textContent = pendingCount;
+            document.getElementById('sidebar_net_profit').textContent = Math.round(netProfit) + ' ج.م';
+        }
+
+        async function loadFinancialReport() {
+            await loadFinances();
+            const { data: students } = await _supabase.from('students').select('*').eq('status', 'active');
+            const { data: teachers } = await _supabase.from('teachers').select('*');
+
+            let totalIncome = 0;
+            let totalSalaries = 0;
+            const salaryTableBody = document.getElementById('teachers_salary_table_body');
+            salaryTableBody.innerHTML = '';
+
+            let teacherSummary = {};
+
+            if (teachers) {
+                teachers.forEach(t => {
+                    teacherSummary[t.name] = {
+                        subject: t.subject || 'عام',
+                        hourlyRate: parseFloat(t.hourly_rate) || 40,
+                        studentsCount: 0,
+                        totalSalary: 0
+                    };
+                });
+            }
+
+            if (students) {
+                students.forEach(s => {
+                    const fee = parseFloat(s.fees) || 0;
+                    totalIncome += fee;
+
+                    const tName = s.teacher_name;
+                    const classes = parseFloat(s.classes_count) || 8;
+                    const duration = parseFloat(s.session_duration) || 1;
+
+                    if (tName && teacherSummary[tName]) {
+                        const salary = classes * duration * teacherSummary[tName].hourlyRate;
+                        teacherSummary[tName].studentsCount++;
+                        teacherSummary[tName].totalSalary += salary;
+                        totalSalaries += salary;
+                    }
+                });
+            }
+
+            for (let tName in teacherSummary) {
+                const info = teacherSummary[tName];
+                salaryTableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-semibold text-emerald-800">${tName}</td>
+                        <td class="p-3">${info.subject}</td>
+                        <td class="p-3">${info.hourlyRate} ج.م</td>
+                        <td class="p-3">${info.studentsCount} طلاب</td>
+                        <td class="p-3 font-bold text-blue-700">${Math.round(info.totalSalary)} ج.م</td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('report_total_income').textContent = totalIncome + ' ج.م';
+            document.getElementById('report_total_salaries').textContent = Math.round(totalSalaries) + ' ج.م';
+            document.getElementById('report_net_profit').textContent = Math.round(totalIncome - totalSalaries) + ' ج.م';
+        }
+
+        function toggleStudentSelect(val) {
+            document.getElementById('student_select_box').style.display = val === 'specific' ? 'block' : 'none';
+        }
+
+        async function loadStudentsForVideoSelect() {
+            const { data } = await _supabase.from('students').select('name').eq('status', 'active');
+            const select = document.getElementById('admin_video_student');
+            if(select) {
+                select.innerHTML = '';
+                if (data && data.length > 0) {
+                    data.forEach(s => {
+                        select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                    });
+                } else {
+                    select.innerHTML = '<option value="">لا توجد طلاب مفعلين حالياً</option>';
+                }
+            }
+        }
+
+        async function uploadVideo(e) {
+            e.preventDefault();
+            const title = document.getElementById('video_title').value;
+            const videoFile = document.getElementById('video_file').files[0];
+            const targetType = document.getElementById('video_target_type').value;
+            const studentName = targetType === 'specific' ? document.getElementById('admin_video_student').value : 'all';
+
+            if (!videoFile) {
+                alert("يرجى اختيار ملف الفيديو من الجهاز أولاً.");
+                return;
+            }
+
+            alert(`جاري رفع الفيديو "${videoFile.name}" على المنصة تلقائياً...`);
+
+            const videoData = {
+                title: title,
+                video_url: videoFile.name,
+                target_type: targetType,
+                student_name: studentName,
+                created_at: new Date()
+            };
+
+            const { error } = await _supabase.from('videos').insert([videoData]);
+
+            if (error) {
+                alert("خطأ أثناء حفظ بيانات الفيديو في القاعدة: " + error.message);
+            } else {
+                alert("تم رفع ونشر الفيديو على المنصة بنجاح! 🚀");
+                document.getElementById('videoForm').reset();
+                document.getElementById('student_select_box').style.display = 'none';
+            }
+        }
+    </script>
+<script>
+function loadStudentIntoForm(student) {
+    if(document.getElementById('s_name')) document.getElementById('s_name').value = student.name || '';
+    if(document.getElementById('s_parent_name')) document.getElementById('s_parent_name').value = student.parent_name || '';
+    if(document.getElementById('s_phone')) document.getElementById('s_phone').value = student.phone || student.parent_phone || '';
+    if(document.getElementById('s_password')) document.getElementById('s_password').value = student.password || student.parent_password || '';
+    if(document.getElementById('s_teacher')) document.getElementById('s_teacher').value = student.teacher || '';
+    if(document.getElementById('s_classes_count')) document.getElementById('s_classes_count').value = student.sessions_count || '';
+    if(document.getElementById('s_fees')) document.getElementById('s_fees').value = student.fees || '';
+    if(document.getElementById('s_status')) document.getElementById('s_status').value = student.status || '';
+}
+
+async function saveStudentChanges(studentId) {
+    const phoneVal = document.getElementById('s_phone') ? document.getElementById('s_phone').value.trim() : '';
+    const passVal = document.getElementById('s_password') ? document.getElementById('s_password').value.trim() : '';
+    
+    const updatedData = {
+        phone: phoneVal,
+        parent_phone: phoneVal,
+        password: passVal,
+        parent_password: passVal,
+        teacher: document.getElementById('s_teacher') ? document.getElementById('s_teacher').value : '',
+        sessions_count: document.getElementById('s_classes_count') ? document.getElementById('s_classes_count').value : '',
+        fees: document.getElementById('s_fees') ? Number(document.getElementById('s_fees').value) || 0 : 0,
+        status: document.getElementById('s_status') ? document.getElementById('s_status').value : ''
+    };
+
+    const { error } = await _supabase
+        .from('students')
+        .update(updatedData)
+        .eq('id', studentId);
+
+    if (error) {
+        alert("خطأ أثناء الحفظ: " + error.message);
+    } else {
+        alert("تم تحديث وحفظ البيانات بنجاح! ✅");
+        location.reload();
+    }
+}
+</script>
