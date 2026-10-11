@@ -27,17 +27,20 @@
         .info-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 14px 10px; border-radius: 12px; text-align: center; }
         .info-card .title { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
         .info-card .val { font-size: 16px; font-weight: 800; color: var(--primary-green); }
-        .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { flex: 1; padding: 12px 10px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; text-align: center; }
         .tab-btn.active, .tab-btn:hover { background: var(--primary-green); color: #ffffff; border-color: var(--primary-green); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
-        .video-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .video-card video { width: 100%; height: 160px; background: #000; object-fit: cover; }
-        .video-body { padding: 12px; }
-        .video-body h4 { font-size: 14px; color: white; margin-bottom: 8px; }
-        .report-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .video-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .video-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; padding: 15px; }
+        .video-card video { width: 100%; max-height: 300px; background: #000; border-radius: 8px; object-fit: cover; }
+        .video-body { margin-top: 12px; }
+        .video-body h4 { font-size: 16px; color: white; margin-bottom: 8px; }
+        .quiz-box { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-top: 12px; }
+        .quiz-option { display: block; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 6px; margin: 6px 0; cursor: pointer; font-size: 13px; transition: 0.2s; border: 1px solid transparent; }
+        .quiz-option:hover { background: rgba(16,185,129,0.1); border-color: var(--primary-green); }
+        .report-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 15px; }
         @media (max-width: 650px) { .info-cards { grid-template-columns: 1fr; } .tabs-nav { flex-direction: column; } }
     </style>
 </head>
@@ -68,8 +71,9 @@
         </div>
 
         <div class="tabs-nav">
-            <button class="tab-btn active" onclick="switchTab('videos', this)">🎬 الدروس والفيديوهات</button>
+            <button class="tab-btn active" onclick="switchTab('videos', this)">🎬 الدروس والاختبارات</button>
             <button class="tab-btn" onclick="switchTab('reports', this)">📝 التقارير والملاحظات</button>
+            <button class="tab-btn" onclick="switchTab('attendance', this)">📊 سجل الحضور والتفاعل</button>
         </div>
 
         <div id="tab-videos" class="tab-content active">
@@ -81,6 +85,12 @@
                 <div class="report-box" style="text-align: center; color: var(--text-muted);">لا توجد تقارير مسجلة حتى الآن.</div>
             </div>
         </div>
+
+        <div id="tab-attendance" class="tab-content">
+            <div id="attendanceContainer">
+                <div class="report-box" style="text-align: center; color: var(--text-muted);">جاري تحميل سجل الحضور...</div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -88,125 +98,175 @@
         const SUPABASE_KEY = "sb_publishable_81So_0s9ttAS-SmJ6Ff0jQ_UaurIrNE";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let currentStudentObj = null;
+
         window.onload = async function() {
             try {
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
-                    const student = JSON.parse(savedUser);
-                    displayStudentData(student);
+                    currentStudentObj = JSON.parse(savedUser);
+                    displayStudentData(currentStudentObj);
                     return;
                 }
 
-                const { data, error } = await _supabase
-                    .from('students')
-                    .select('*')
-                    .order('id', { ascending: false })
-                    .limit(1);
-
-                if (error) {
-                    console.error("Supabase Error:", error);
-                    return;
-                }
-
+                const { data } = await _supabase.from('students').select('*').order('id', { ascending: false }).limit(1);
                 if (data && data.length > 0) {
-                    displayStudentData(data[0]);
-                } else {
-                    document.getElementById('dispStudentName').textContent = '⚠️ لم يتم العثور على بيانات الطالب';
+                    currentStudentObj = data[0];
+                    displayStudentData(currentStudentObj);
                 }
-            } catch(err) {
-                console.error("JS Error:", err);
-            }
+            } catch(err) {}
         };
 
         function displayStudentData(student) {
-            const studentName = student.name || 'غير معروف';
-            const parentName = student.parent_name || 'غير محدد';
-            const teacherName = student.teacher_name || student.teacher || 'ايمن صفوت نقادي احمد';
-            
-            // سحب القيمة أياً كان اسم العمود في قاعدة البيانات وسحبها كنص مباشر
-            let rawDuration = student.مدة_الجلسة ?? student.duration ?? student.session_duration ?? student.time ?? '';
-            let durationText = '';
+            document.getElementById('dispStudentName').textContent = '🎓 الطالب: ' + (student.name || 'غير معروف');
+            document.getElementById('dispParentName').textContent = student.parent_name || 'غير محدد';
+            document.getElementById('dispTeacherName').textContent = student.teacher_name || 'ايمن صفوت نقادي احمد';
+
+            let rawDuration = student.session_duration ?? student.duration ?? student.مدة_الجلسة ?? '';
+            let durationText = 'غير محدد';
 
             if (rawDuration !== '' && rawDuration !== null && rawDuration !== undefined) {
                 let strVal = String(rawDuration).trim();
-                // لو القيمة مُسجلة كرقم (مثلاً 40 أو 1) نحط جنبها كلمة دقيقة لو مفيهاش كلمات
-                if (!isNaN(strVal) && !strVal.includes('دقيقة') && !strVal.includes('ساعة')) {
-                    let num = Number(strVal);
-                    if (num < 1 && num > 0) {
-                        durationText = Math.round(num * 60) + ' دقيقة';
-                    } else if (num == 1) {
-                        durationText = 'ساعة واحدة';
+                let numVal = parseFloat(strVal);
+
+                if (!isNaN(numVal)) {
+                    if (numVal === 0.5) {
+                        durationText = '30 دقيقة';
+                    } else if (numVal === 0.66 || numVal === 0.67) {
+                        durationText = '40 دقيقة';
+                    } else if (numVal === 0.75) {
+                        durationText = '45 دقيقة';
+                    } else if (numVal === 1 || numVal === 1.0) {
+                        durationText = 'ساعة كاملة';
+                    } else if (numVal < 1) {
+                        durationText = Math.round(numVal * 60) + ' دقيقة';
                     } else {
-                        durationText = strVal + ' دقيقة';
+                        durationText = numVal + ' ساعة';
                     }
                 } else {
-                    durationText = strVal; // تظهر زي ما هي مكتوبة تماماً (مثل "40 دقيقة")
+                    durationText = strVal;
                 }
-            } else {
-                durationText = 'غير محدد';
             }
 
-            const sessionsVal = student.classes_count !== undefined ? student.classes_count : 12;
-            const feeVal = student.fees !== undefined && student.fees !== null ? student.fees : 500;
-
-            document.getElementById('dispStudentName').textContent = '🎓 الطالب: ' + studentName;
-            document.getElementById('dispParentName').textContent = parentName;
-            document.getElementById('dispTeacherName').textContent = teacherName;
-            
             document.getElementById('dispDuration').textContent = durationText;
-            document.getElementById('dispSessions').textContent = sessionsVal + ' حصص';
-            document.getElementById('dispFee').textContent = feeVal + ' ج.م';
+            document.getElementById('dispSessions').textContent = (student.classes_count || 12) + ' حصص';
+            document.getElementById('dispFee').textContent = (student.fees || 500) + ' ج.م';
 
-            loadStudentVideos(studentName);
-            loadStudentReports(studentName);
+            loadStudentContent(student.name);
+            loadStudentReports(student.name);
+            loadStudentAttendance(student.name);
         }
 
         function switchTab(tabName, btnElement) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            btnElement.classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
             document.getElementById('tab-' + tabName).classList.add('active');
         }
 
-        async function loadStudentVideos(studentName) {
+        async function loadStudentContent(studentName) {
             const container = document.getElementById('videosContainer');
-            const { data } = await _supabase.from('videos').select('*').order('id', { ascending: false });
+            
+            const { data: videos } = await _supabase.from('videos').select('*').order('id', { ascending: false });
+            const { data: quizzes } = await _supabase.from('quizzes').select('*');
+            const { data: results } = await _supabase.from('quiz_results').select('*').eq('student_name', studentName);
 
-            if (!data || data.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس أو فيديوهات متاحة حالياً.</div>';
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس متاحة حالياً.</div>';
                 return;
             }
 
-            const studentVideos = data.filter(v => v.target_type === 'all' || v.student_name === studentName);
+            const studentVideos = videos.filter(v => v.target_type === 'all' || v.student_name === studentName);
             if (studentVideos.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس مخصصة حالياً.</div>';
+                container.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">لا توجد دروس مخصصة حالياً.</div>';
                 return;
             }
 
-            container.innerHTML = studentVideos.map(v => `
-                <div class="video-card">
-                    <video controls controlsList="nodownload"><source src="${v.video_url}" type="video/mp4"></video>
-                    <div class="video-body">
-                        <h4>${v.title}</h4>
-                        <span style="font-size: 11px; color: var(--primary-green);">${v.target_type === 'specific' ? 'خاص بك 👤' : 'عام 🌐'}</span>
+            container.innerHTML = studentVideos.map(v => {
+                const vQuizzes = quizzes ? quizzes.filter(q => q.id_video == v.id || q.video_id == v.id) : [];
+                
+                let quizzesHTML = '';
+                if (vQuizzes.length > 0) {
+                    quizzesHTML = `<div class="quiz-box"><h5 style="color: var(--primary-green); margin-bottom: 8px; font-size: 14px;">📝 اختبار قصير على الدرس:</h5>`;
+                    vQuizzes.forEach((q, idx) => {
+                        const solved = results ? results.find(r => r.quiz_id == q.id) : null;
+                        if (solved) {
+                            quizzesHTML += `<div style="font-size:12px; margin-top:6px; color:${solved.is_correct ? '#10b981' : '#ef4444'}">
+                                السؤال (${idx+1}): ${q.question} - <strong>${solved.is_correct ? '✅ اجابة صحيحة' : '❌ اجابة خاطئة'}</strong>
+                            </div>`;
+                        } else {
+                            quizzesHTML += `
+                                <div style="margin-bottom: 10px; font-size: 13px;">
+                                    <p><strong>س${idx+1}:</strong> ${q.question}</p>
+                                    <div class="quiz-option" onclick="submitQuizAnswer(${q.id}, 'a', '${q.correct_answer}', '${studentName}')">أ) ${q.option_a}</div>
+                                    <div class="quiz-option" onclick="submitQuizAnswer(${q.id}, 'b', '${q.correct_answer}', '${studentName}')">ب) ${q.option_b}</div>
+                                    <div class="quiz-option" onclick="submitQuizAnswer(${q.id}, 'c', '${q.correct_answer}', '${studentName}')">ج) ${q.option_c}</div>
+                                    <div class="quiz-option" onclick="submitQuizAnswer(${q.id}, 'd', '${q.correct_answer}', '${studentName}')">د) ${q.option_d}</div>
+                                </div>
+                            `;
+                        }
+                    });
+                    quizzesHTML += `</div>`;
+                }
+
+                return `
+                    <div class="video-card">
+                        <video controls controlsList="nodownload">
+                            <source src="${v.video_url}" type="video/mp4">
+                        </video>
+                        <div class="video-body">
+                            <h4>${v.title}</h4>
+                            ${quizzesHTML}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        async function submitQuizAnswer(quizId, chosen, correct, studentName) {
+            const isCorrect = (chosen === correct);
+            const { error } = await _supabase.from('quiz_results').insert([{
+                quiz_id: quizId,
+                student_id: currentStudentObj.id,
+                student_name: studentName,
+                selected_answer: chosen,
+                is_correct: isCorrect
+            }]);
+
+            if (error) {
+                alert("حدث خطأ أثناء حفظ الإجابة.");
+            } else {
+                alert(isCorrect ? "إجابة صحيحة أحسنت! 🌟" : "إجابة خاطئة، حاول مرة أخرى في الدرس القادم.");
+                loadStudentContent(studentName);
+            }
         }
 
         async function loadStudentReports(studentName) {
             const container = document.getElementById('reportsContainer');
-            try {
-                const { data } = await _supabase.from('reports').select('*').eq('student_name', studentName);
-                if (data && data.length > 0) {
-                    container.innerHTML = data.map(r => `
-                        <div class="report-box">
-                            <h4 style="color: var(--primary-green); margin-bottom: 8px;">📅 تقرير يوم: ${r.date || 'اليوم'}</h4>
-                            <p style="color: #fff; font-size: 13px;">${r.notes || r.report || ''}</p>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {}
+            const { data } = await _supabase.from('evaluations').select('*').eq('student_name', studentName).order('id', { ascending: false });
+            if (data && data.length > 0) {
+                container.innerHTML = data.map(r => `
+                    <div class="report-box">
+                        <h4 style="color: var(--primary-green); margin-bottom: 6px;">📅 تقييم حصة يوم: ${r.lesson_date || 'اليوم'}</h4>
+                        <p style="font-size: 13px;"><strong>الحفظ الجديد:</strong> ${r.new_memorization || '-'}</p>
+                        <p style="font-size: 13px;"><strong>الواجب:</strong> ${r.homework || '-'}</p>
+                        <p style="font-size: 13px; margin-top: 6px; color: var(--text-muted);"><strong>ملاحظات المعلم:</strong> ${r.teacher_notes || '-'}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function loadStudentAttendance(studentName) {
+            const container = document.getElementById('attendanceContainer');
+            const { data } = await _supabase.from('attendance').select('*').eq('student_name', studentName).order('id', { ascending: false });
+            if (data && data.length > 0) {
+                container.innerHTML = data.map(att => `
+                    <div class="report-box" style="padding: 10px 15px; display:flex; justify-content:space-between;">
+                        <span>📌 ${att.details}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">${new Date(att.created_at).toLocaleString('ar-EG')}</span>
+                    </div>
+                `).join('');
+            }
         }
 
         function logout() {

@@ -44,7 +44,7 @@
                         <i class="fas fa-chalkboard-teacher w-5"></i> إضافة / تفعيل معلم
                     </button>
                     <button onclick="switchTab('videos')" class="w-full text-right flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-800/60 text-emerald-100 transition">
-                        <i class="fas fa-video w-5"></i> رفع فيديو على المنصة
+                        <i class="fas fa-video w-5"></i> رفع فيديو والاختبارات
                     </button>
                 </nav>
 
@@ -79,9 +79,14 @@
             <!-- Top Header Bar -->
             <header class="bg-emerald-700 text-white shadow-md p-4 rounded-xl flex justify-between items-center">
                 <h1 class="text-xl font-bold"><i class="fas fa-tachometer-alt ml-2"></i> لوحة التحكم الرئيسية</h1>
-                <button onclick="location.reload()" class="bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded text-sm transition flex items-center gap-1">
-                    <i class="fas fa-sync-alt"></i> تحديث البيانات
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm transition flex items-center gap-1 font-bold">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </button>
+                    <button onclick="location.reload()" class="bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded text-sm transition flex items-center gap-1">
+                        <i class="fas fa-sync-alt"></i> تحديث
+                    </button>
+                </div>
             </header>
 
             <!-- Statistics Cards Section -->
@@ -122,7 +127,7 @@
             <div id="section_home" class="space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
-                    <!-- Student Form Card (إضافة / تفعيل طالب جديد) -->
+                    <!-- Student Form Card -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <h2 id="form_title_student" class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">تسجيل طالب جديد أو تفعيل</h2>
                         <form id="studentForm" onsubmit="saveStudent(event)" class="space-y-4">
@@ -150,22 +155,20 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">المعلم</label>
-                                    <select id="s_teacher" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                        <!-- Dynamic Teachers Dropdown -->
-                                    </select>
+                                    <select id="s_teacher" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">عدد الحصص (الشهر)</label>
                                     <select id="s_classes_count" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                                         <option value="8">8 حصص</option>
-                                        <option value="12">12 حصصة</option>
+                                        <option value="12">12 حصة</option>
                                         <option value="16">16 حصة</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">زمن الحصة</label>
                                     <select id="s_session_duration" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                        <option value="0.5">30 دقيقة (نصف ساعة)</option>
+                                        <option value="0.5">30 دقيقة</option>
                                         <option value="0.66">40 دقيقة</option>
                                         <option value="0.75">45 دقيقة</option>
                                         <option value="1.0">ساعة كاملة</option>
@@ -196,9 +199,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
                         <div>
                             <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">قائمة المعلمين المسجلين</h2>
-                            <div id="teachers_list_container" class="space-y-2 max-h-64 overflow-y-auto">
-                                <!-- Dynamic Teachers List -->
-                            </div>
+                            <div id="teachers_list_container" class="space-y-2 max-h-64 overflow-y-auto"></div>
                         </div>
                         <div class="pt-4">
                             <button onclick="switchTab('teachers_form'); resetTeacherForm();" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-lg text-sm font-semibold transition">
@@ -210,7 +211,7 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: STUDENTS LIST (قائمة الطلاب الكاملة مع زر إضافة طالب جديد) -->
+            <!-- SECTION 2: STUDENTS LIST -->
             <div id="section_students" class="space-y-6" style="display: none;">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                     <div class="flex justify-between items-center mb-4 pb-2 border-b">
@@ -240,15 +241,13 @@
                                     <th class="p-3">إجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="students_table_body" class="text-sm divide-y">
-                                <!-- Dynamic rows -->
-                            </tbody>
+                            <tbody id="students_table_body" class="text-sm divide-y"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION 3: TEACHERS FORM (إضافة وتفعيل المعلم مع المادة وسعر الساعة) -->
+            <!-- SECTION 3: TEACHERS FORM -->
             <div id="section_teachers_form" class="space-y-6" style="display: none;">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
                     <h2 id="form_title_teacher" class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b">إضافة أو تفعيل معلم جديد</h2>
@@ -295,7 +294,7 @@
                 </div>
             </div>
 
-            <!-- SECTION 5: FINANCES & PROFITS (أرباح الأكاديمية والرواتب) -->
+            <!-- SECTION 5: FINANCES & PROFITS -->
             <div id="section_finances" class="space-y-6" style="display: none;">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
                     <h2 class="text-xl font-bold text-emerald-800 pb-2 border-b"><i class="fas fa-wallet ml-2"></i> تقرير أرباح الأكاديمية ورواتب المعلمين</h2>
@@ -328,45 +327,88 @@
                                         <th class="p-3">إجمالي الراتب المستحق</th>
                                     </tr>
                                 </thead>
-                                <tbody id="teachers_salary_table_body" class="text-sm divide-y">
-                                    <!-- Dynamic Teachers Salary Breakdown -->
-                                </tbody>
+                                <tbody id="teachers_salary_table_body" class="text-sm divide-y"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION 4: VIDEOS UPLOAD (رفع فيديو على المنصة) -->
+            <!-- SECTION 4: VIDEOS UPLOAD & QUIZZES (مع خيارات زمن العرض وإضافة الاختبارات) -->
             <div id="section_videos" class="space-y-6" style="display: none;">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
-                    <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b"><i class="fas fa-video ml-1"></i> رفع فيديو على المنصة</h2>
-                    <form id="videoForm" onsubmit="uploadVideo(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">عنوان الدرس أو الفيديو</label>
-                            <input type="text" id="video_title" placeholder="مثال: درس الحروف الهجائية - الحلقة الأولى" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">اختر ملف الفيديو من الجهاز</label>
-                            <input type="file" id="video_file" accept="video/*" required class="w-full border rounded-lg p-2 bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">نطاق النشر:</label>
-                            <select id="video_target_type" onchange="toggleStudentSelect(this.value)" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                <option value="all">لجميع الطلاب</option>
-                                <option value="specific">طالب مخصص</option>
-                            </select>
-                        </div>
-                        <div id="student_select_box" style="display: none;">
-                            <label class="block text-sm font-semibold mb-1">اختر الطالب:</label>
-                            <select id="admin_video_student" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                <!-- Dynamic active students -->
-                            </select>
-                        </div>
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">رفع ونشر الفيديو على المنصة فوراً</button>
-                        </div>
-                    </form>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- رفع الفيديو (مع خيار زمن العرض) -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b"><i class="fas fa-video ml-1"></i> رفع فيديو على المنصة</h2>
+                        <form id="videoForm" onsubmit="uploadVideo(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">عنوان الدرس أو الفيديو</label>
+                                <input type="text" id="video_title" placeholder="مثال: درس الحروف الهجائية - الحلقة الأولى" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">اختر ملف الفيديو من الجهاز</label>
+                                <input type="file" id="video_file" accept="video/*" required class="w-full border rounded-lg p-2 bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">نوع إتاحة وعرض الفيديو:</label>
+                                <select id="video_time_type" onchange="toggleTimeBox(this.value)" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="unlimited">مفتوح دائماً (بدون زمن محدد)</option>
+                                    <option value="timed">مقيد بزمن عرض محدد</option>
+                                </select>
+                            </div>
+                            <div id="time_limit_box" style="display: none;">
+                                <label class="block text-sm font-semibold mb-1">مدة العرض والإتاحة (بالدقائق):</label>
+                                <input type="number" id="video_duration_minutes" value="30" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="مثال: 30 دقيقة">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">نطاق النشر:</label>
+                                <select id="video_target_type" onchange="toggleStudentSelect(this.value)" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="all">لجميع الطلاب</option>
+                                    <option value="specific">طالب مخصص</option>
+                                </select>
+                            </div>
+                            <div id="student_select_box" style="display: none;">
+                                <label class="block text-sm font-semibold mb-1">اختر الطالب:</label>
+                                <select id="admin_video_student" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                            </div>
+                            <div class="pt-2">
+                                <button type="submit" id="btn_upload_video" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">رفع ونشر الفيديو على المنصة فوراً</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- إضافة اختبار قصير (Quiz) للفيديو -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b"><i class="fas fa-question-circle ml-1"></i> إضافة اختبار قصير (Quiz) لفيديو</h2>
+                        <form id="quizForm" onsubmit="saveQuiz(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">اختر الفيديو المرتبط بالسؤال:</label>
+                                <select id="quiz_video_select" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">نص السؤال:</label>
+                                <input type="text" id="quiz_question" placeholder="مثال: ما هي المعجزة الكبرى في سورة...؟" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="opt_a" placeholder="الخيار (أ)" required class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <input type="text" id="opt_b" placeholder="الخيار (ب)" required class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <input type="text" id="opt_c" placeholder="الخيار (ج)" required class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <input type="text" id="opt_d" placeholder="الخيار (د)" required class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">الإجابة الصحيحة:</label>
+                                <select id="quiz_correct" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    <option value="a">الخيار (أ)</option>
+                                    <option value="b">الخيار (ب)</option>
+                                    <option value="c">الخيار (ج)</option>
+                                    <option value="d">الخيار (د)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-semibold transition">حفظ وإضافة السؤال ✅</button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
 
@@ -376,10 +418,28 @@
     <!-- JavaScript Application Logic -->
     <script>
         const SUPABASE_URL = 'https://rihnbystzsxwfrdabcxa.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaG5ieXN0enN4d2ZyZGFiY3hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzEyOTAsImV4cCI6MjEwNDcwNzI5MH0.Qz75YS5UqaaOU0z_1JuAP_pANa_jWoVWoWfNOoKe_Uw';
+        const SUPABASE_KEY = 'sb_publishable_81So_0s9ttAS-SmJ6Ff0jQ_UaurIrNE';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentStudentFilter = 'all';
+
+        window.onload = function() {
+            if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
+                alert("يجب تسجيل الدخول كمدير أولاً!");
+                window.location.href = 'login.html';
+                return;
+            }
+            loadTeachers();
+            loadStudents();
+            loadFinances();
+            loadStudentsForVideoSelect();
+            loadVideosForQuizSelect();
+        };
+
+        function logoutAdmin() {
+            localStorage.removeItem('isAdminLoggedIn');
+            window.location.href = 'login.html';
+        }
 
         function switchTab(tabName) {
             document.getElementById('section_home').style.display = 'none';
@@ -397,12 +457,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            loadTeachers();
-            loadStudents();
-            loadFinances();
-            loadStudentsForVideoSelect();
-        });
+        function toggleTimeBox(val) {
+            document.getElementById('time_limit_box').style.display = val === 'timed' ? 'block' : 'none';
+        }
 
         async function loadTeachers() {
             const { data } = await _supabase.from('teachers').select('*');
@@ -511,21 +568,27 @@
                         ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">مفعل</span>' 
                         : '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">قيد المراجعة</span>';
 
-                    const classesInfo = `${student.classes_count || 8} حصص (${student.session_duration == 0.5 ? '30 دقيقة' : student.session_duration == 0.66 ? '40 دقيقة' : student.session_duration == 0.75 ? '45 دقيقة' : 'ساعة'})`;
+                    const durVal = student.session_duration;
+                    const durText = durVal == 0.5 ? '30 دقيقة' : durVal == 0.66 ? '40 دقيقة' : durVal == 0.75 ? '45 دقيقة' : 'ساعة';
+                    const classesInfo = `${student.classes_count || 8} حصص (${durText})`;
+                    const phoneVal = student.phone || student.parent_phone || '';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-emerald-50 transition">
-                            <td class="p-3 font-semibold text-emerald-800 cursor-pointer hover:underline" onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${student.phone || ''}', '${student.password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', '${student.status || 'active'}')">
+                            <td class="p-3 font-semibold text-emerald-800 cursor-pointer hover:underline" onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${phoneVal}', '${student.password || student.parent_password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', '${student.status || 'active'}')">
                                 <i class="fas fa-edit ml-1 text-xs"></i> ${student.name || 'بدون اسم'}
                             </td>
                             <td class="p-3">${student.parent_name || '-'}</td>
-                            <td class="p-3">${student.phone || '-'}</td>
+                            <td class="p-3">${phoneVal || '-'}</td>
                             <td class="p-3">${student.teacher_name || 'غير محدد'}</td>
                             <td class="p-3 text-xs">${classesInfo}</td>
                             <td class="p-3 font-bold">${student.fees || 0} ج.م</td>
                             <td class="p-3">${statusBadge}</td>
-                            <td class="p-3 flex gap-2">
-                                <button onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${student.phone || ''}', '${student.password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', 'active')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">تفعيل سريع</button>
+                            <td class="p-3 flex gap-2 items-center flex-wrap">
+                                <button onclick="sendWhatsAppReport('${phoneVal}', '${student.name || ''}', 'تم حضور حصة اليوم ومتابعة مستوى الطالب بنجاح.')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 transition" title="إرسال تقرير واتساب">
+                                    <i class="fab fa-whatsapp"></i> واتساب
+                                </button>
+                                <button onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${phoneVal}', '${student.password || student.parent_password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', 'active')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">تفعيل</button>
                                 <button onclick="deleteStudent(${student.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">حذف</button>
                             </td>
                         </tr>
@@ -534,6 +597,22 @@
             } else {
                 tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">لا توجد طلبات تسجيل طلاب حالياً.</td></tr>`;
             }
+        }
+
+        // دالة إرسال تقرير واتساب بضغطة زر
+        function sendWhatsAppReport(parentPhone, studentName, reportDetails) {
+            if (!parentPhone) {
+                alert("رقم الهاتف غير متوفر لهذا الطالب.");
+                return;
+            }
+            let phone = parentPhone.replace(/\D/g, '');
+            if (!phone.startsWith('2')) {
+                phone = '2' + phone; // كود مصر الافتراضي
+            }
+            
+            const message = `السلام عليكم ولي أمر الطالب/ة (${studentName}) 🌿\n\nنحيطكم علماً بأداء وتقييم الطالب اليوم في أكاديمية منهاج:\n${reportDetails}\n\nمع تحيات إدارة الأكاديمية 📚`;
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
         }
 
         function filterStudentsByStatus(status) {
@@ -567,11 +646,16 @@
         async function saveStudent(e) {
             e.preventDefault();
             const id = document.getElementById('student_id').value;
+            const phoneVal = document.getElementById('s_phone').value.trim();
+            const passVal = document.getElementById('s_password').value.trim();
+
             const studentData = {
                 name: document.getElementById('s_name').value,
                 parent_name: document.getElementById('s_parent').value,
-                phone: document.getElementById('s_phone').value,
-                password: document.getElementById('s_password').value,
+                phone: phoneVal,
+                parent_phone: phoneVal,
+                password: passVal,
+                parent_password: passVal,
                 teacher_name: document.getElementById('s_teacher').value,
                 classes_count: parseInt(document.getElementById('s_classes_count').value) || 8,
                 session_duration: parseFloat(document.getElementById('s_session_duration').value) || 1,
@@ -616,7 +700,6 @@
             let pendingCount = 0;
             let totalSalaries = 0;
 
-            // حساب رواتب المعلمين وإجمالي الاشتراكات
             if (students) {
                 students.forEach(s => {
                     const fee = parseFloat(s.fees) || 0;
@@ -624,7 +707,6 @@
                         totalIncome += fee;
                         activeCount++;
 
-                        // حساب راتب المعلم لهذا الطالب: (عدد الحصص * زمن الحصة * سعر الساعة للمعلم)
                         const teacherObj = teachers ? teachers.find(t => t.name === s.teacher_name) : null;
                         const hourlyRate = teacherObj ? (parseFloat(teacherObj.hourly_rate) || 40) : 40;
                         const classes = parseFloat(s.classes_count) || 8;
@@ -639,7 +721,6 @@
 
             let netProfit = totalIncome - totalSalaries;
 
-            // تحديث بطاقات الواجهة الرئيسية
             document.getElementById('finance_total_income').textContent = totalIncome + ' ج.م';
             document.getElementById('finance_total_salaries').textContent = Math.round(totalSalaries) + ' ج.م';
             document.getElementById('finance_net_profit').textContent = Math.round(netProfit) + ' ج.م';
@@ -728,10 +809,29 @@
             }
         }
 
+        async function loadVideosForQuizSelect() {
+            const { data } = await _supabase.from('videos').select('id, title').order('id', { ascending: false });
+            const select = document.getElementById('quiz_video_select');
+            if(select) {
+                select.innerHTML = '';
+                if (data && data.length > 0) {
+                    data.forEach(v => {
+                        select.innerHTML += `<option value="${v.id}">${v.title}</option>`;
+                    });
+                } else {
+                    select.innerHTML = '<option value="">لا توجد فيديوهات مرفوعة حالياً</option>';
+                }
+            }
+        }
+
+        // دالة رفع الفيديو مع خيار الوقت والزمن
         async function uploadVideo(e) {
             e.preventDefault();
+            const btn = document.getElementById('btn_upload_video');
             const title = document.getElementById('video_title').value;
             const videoFile = document.getElementById('video_file').files[0];
+            const timeType = document.getElementById('video_time_type').value;
+            const durationMins = parseInt(document.getElementById('video_duration_minutes').value) || 0;
             const targetType = document.getElementById('video_target_type').value;
             const studentName = targetType === 'specific' ? document.getElementById('admin_video_student').value : 'all';
 
@@ -740,64 +840,70 @@
                 return;
             }
 
-            alert(`جاري رفع الفيديو "${videoFile.name}" على المنصة تلقائياً...`);
+            btn.disabled = true;
+            btn.textContent = "جاري رفع الفيديو على الخزنة السحابية...";
 
-            const videoData = {
-                title: title,
-                video_url: videoFile.name,
-                target_type: targetType,
-                student_name: studentName,
-                created_at: new Date()
-            };
+            try {
+                const fileExt = videoFile.name.split('.').pop().toLowerCase();
+                const fileName = `admin_vid_${Date.now()}.${fileExt}`;
 
-            const { error } = await _supabase.from('videos').insert([videoData]);
+                const { error: uploadError } = await _supabase.storage
+                    .from('videos')
+                    .upload(fileName, videoFile);
 
-            if (error) {
-                alert("خطأ أثناء حفظ بيانات الفيديو في القاعدة: " + error.message);
-            } else {
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = _supabase.storage.from('videos').getPublicUrl(fileName);
+
+                const videoData = {
+                    title: title,
+                    video_url: publicUrlData.publicUrl,
+                    target_type: targetType,
+                    student_name: studentName,
+                    assigned_student: studentName,
+                    teacher_name: 'الإدارة (الأدمن)',
+                    time_type: timeType,
+                    video_duration_minutes: durationMins
+                };
+
+                const { error: dbError } = await _supabase.from('videos').insert([videoData]);
+                if (dbError) throw dbError;
+
                 alert("تم رفع ونشر الفيديو على المنصة بنجاح! 🚀");
                 document.getElementById('videoForm').reset();
                 document.getElementById('student_select_box').style.display = 'none';
+                document.getElementById('time_limit_box').style.display = 'none';
+                loadVideosForQuizSelect();
+
+            } catch (err) {
+                alert("حدث خطأ أثناء رفع الفيديو: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "رفع ونشر الفيديو على المنصة فوراً";
+            }
+        }
+
+        // دالة حفظ وإضافة أسئلة الاختبارات (Quizzes)
+        async function saveQuiz(e) {
+            e.preventDefault();
+            const quizData = {
+                video_id: document.getElementById('quiz_video_select').value,
+                question: document.getElementById('quiz_question').value,
+                option_a: document.getElementById('opt_a').value,
+                option_b: document.getElementById('opt_b').value,
+                option_c: document.getElementById('opt_c').value,
+                option_d: document.getElementById('opt_d').value,
+                correct_answer: document.getElementById('quiz_correct').value
+            };
+
+            const { error } = await _supabase.from('quizzes').insert([quizData]);
+            if (error) {
+                alert("خطأ في حفظ السؤال: " + error.message);
+            } else {
+                alert("تمت إضافة سؤال الاختبار بنجاح! ✅");
+                document.getElementById('quizForm').reset();
             }
         }
     </script>
-<script>
-function loadStudentIntoForm(student) {
-    if(document.getElementById('s_name')) document.getElementById('s_name').value = student.name || '';
-    if(document.getElementById('s_parent_name')) document.getElementById('s_parent_name').value = student.parent_name || '';
-    if(document.getElementById('s_phone')) document.getElementById('s_phone').value = student.phone || student.parent_phone || '';
-    if(document.getElementById('s_password')) document.getElementById('s_password').value = student.password || student.parent_password || '';
-    if(document.getElementById('s_teacher')) document.getElementById('s_teacher').value = student.teacher || '';
-    if(document.getElementById('s_classes_count')) document.getElementById('s_classes_count').value = student.sessions_count || '';
-    if(document.getElementById('s_fees')) document.getElementById('s_fees').value = student.fees || '';
-    if(document.getElementById('s_status')) document.getElementById('s_status').value = student.status || '';
-}
-
-async function saveStudentChanges(studentId) {
-    const phoneVal = document.getElementById('s_phone') ? document.getElementById('s_phone').value.trim() : '';
-    const passVal = document.getElementById('s_password') ? document.getElementById('s_password').value.trim() : '';
-    
-    const updatedData = {
-        phone: phoneVal,
-        parent_phone: phoneVal,
-        password: passVal,
-        parent_password: passVal,
-        teacher: document.getElementById('s_teacher') ? document.getElementById('s_teacher').value : '',
-        sessions_count: document.getElementById('s_classes_count') ? document.getElementById('s_classes_count').value : '',
-        fees: document.getElementById('s_fees') ? Number(document.getElementById('s_fees').value) || 0 : 0,
-        status: document.getElementById('s_status') ? document.getElementById('s_status').value : ''
-    };
-
-    const { error } = await _supabase
-        .from('students')
-        .update(updatedData)
-        .eq('id', studentId);
-
-    if (error) {
-        alert("خطأ أثناء الحفظ: " + error.message);
-    } else {
-        alert("تم تحديث وحفظ البيانات بنجاح! ✅");
-        location.reload();
-    }
-}
-</script>
+</body>
+</html>
