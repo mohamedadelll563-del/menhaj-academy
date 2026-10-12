@@ -152,7 +152,7 @@
         </form>
 
         <!-- زر الانتقال لتسجيل دخول الأدمن أو العودة -->
-        <a class="admin-link" id="adminToggleLink" onclick="toggleAdminMode()">🔒 دخول إدارة الأكاديمية (للمدير)</a>
+        <a class="admin-link" id="adminToggleLink" onclick="toggleAdminMode()">🔒 دخول إدارة الأكاديمية (ل للمدير)</a>
     </div>
 
     <script>
@@ -254,9 +254,9 @@
                     const studentData = {
                         name: document.getElementById('reg_std_name').value.trim(),
                         parent_name: document.getElementById('reg_parent_name').value.trim(),
-                        phone: phoneVal,          // تم إضافته لضمان الحفظ في العمود العام
+                        phone: phoneVal,
                         parent_phone: phoneVal,
-                        password: passVal,        // تم إضافته لضمان الحفظ في العمود العام
+                        password: passVal,
                         parent_password: passVal,
                         fees: 0,
                         status: 'pending'
@@ -267,7 +267,7 @@
                     if (error) { 
                         alert("خطأ في التسجيل: " + error.message); 
                     } else {
-                        alert("تم إنشاء حساب الطالب بنجاح! حسابك قيد المراجعة من الإدارة.");
+                        alert("تم إنشاء حساب الطالب بنجاح! حسابك قيد المراجعة والتفعيل من الإدارة حالياً. ⏳");
                         localStorage.setItem('currentUser', JSON.stringify(studentData));
                         localStorage.setItem('user_phone', phoneVal);
                         window.location.href = 'pending.html';
@@ -286,13 +286,13 @@
                     if (error) { 
                         alert("خطأ في تسجيل المعلم: " + error.message); 
                     } else {
-                        alert("تم تسجيل حساب المعلم بنجاح! حسابك قيد المراجعة من الإدارة.");
+                        alert("تم تسجيل حساب المعلم بنجاح! حسابك قيد المراجعة والتفعيل من الإدارة حالياً. ⏳");
                         localStorage.setItem('currentTeacher', JSON.stringify(teacherData));
                         window.location.href = 'pending.html';
                     }
                 }
             } 
-            // 3. معالجة تسجيل الدخول الفعلي المرن (طالب أو معلم)
+            // 3. معالجة تسجيل الدخول الفعلي مع التحقق من حالة التفعيل
             else {
                 const phone = document.getElementById('log_phone').value.trim();
                 const password = document.getElementById('log_password').value.trim();
@@ -315,6 +315,15 @@
                 }
 
                 if (student) {
+                    const sStatus = student.status ? String(student.status).toLowerCase().trim() : 'pending';
+                    
+                    if (sStatus !== 'active' && sStatus !== 'مفعل' && sStatus !== 'true') {
+                        alert("حسابك قيد المراجعة والتفعيل من قبل إدارة الأكاديمية حالياً. يرجى الانتظار! ⏳");
+                        localStorage.setItem('currentUser', JSON.stringify(student));
+                        window.location.href = 'pending.html';
+                        return;
+                    }
+
                     localStorage.setItem('currentUser', JSON.stringify(student));
                     localStorage.setItem('currentStudent', JSON.stringify(student));
                     localStorage.setItem('user_phone', student.parent_phone || student.phone || phone);
@@ -338,14 +347,17 @@
                 }
 
                 if (teacher) {
-                    localStorage.setItem('currentTeacher', JSON.stringify(teacher));
+                    const tStatus = teacher.status ? String(teacher.status).toLowerCase().trim() : 'pending';
                     
-                    const tStatus = teacher.status ? String(teacher.status).toLowerCase().trim() : 'active';
-                    if (tStatus === 'active' || tStatus === 'مفعل' || tStatus === 'true' || tStatus === '') {
-                        window.location.href = 'teacher-dashboard.html';
-                    } else {
+                    if (tStatus !== 'active' && tStatus !== 'مفعل' && tStatus !== 'true') {
+                        alert("حساب المعلم قيد المراجعة والتفعيل من قبل الإدارة حالياً. ⏳");
+                        localStorage.setItem('currentTeacher', JSON.stringify(teacher));
                         window.location.href = 'pending.html';
+                        return;
                     }
+
+                    localStorage.setItem('currentTeacher', JSON.stringify(teacher));
+                    window.location.href = 'teacher-dashboard.html';
                     return;
                 }
 

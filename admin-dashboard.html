@@ -334,11 +334,11 @@
                 </div>
             </div>
 
-            <!-- SECTION 4: VIDEOS UPLOAD & QUIZZES (مع خيارات زمن العرض وإضافة الاختبارات) -->
+            <!-- SECTION 4: VIDEOS UPLOAD & QUIZZES -->
             <div id="section_videos" class="space-y-6" style="display: none;">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
-                    <!-- رفع الفيديو (مع خيار زمن العرض) -->
+                    <!-- رفع الفيديو -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold text-emerald-800 mb-4 pb-2 border-b"><i class="fas fa-video ml-1"></i> رفع فيديو على المنصة</h2>
                         <form id="videoForm" onsubmit="uploadVideo(event)" class="space-y-4">
@@ -586,7 +586,10 @@
                             <td class="p-3">${statusBadge}</td>
                             <td class="p-3 flex gap-2 items-center flex-wrap">
                                 <button onclick="sendWhatsAppReport('${phoneVal}', '${student.name || ''}', 'تم حضور حصة اليوم ومتابعة مستوى الطالب بنجاح.')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 transition" title="إرسال تقرير واتساب">
-                                    <i class="fab fa-whatsapp"></i> واتساب
+                                    <i class="fab fa-whatsapp"></i> تقرير
+                                </button>
+                                <button onclick="sendVideoNotificationToParent('${phoneVal}', '${student.name || ''}', 'أحدث الدروس والأنشطة التعليمية')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 transition" title="إشعار فيديو جديد">
+                                    <i class="fas fa-bell"></i> إشعار
                                 </button>
                                 <button onclick="fillStudentForm(${student.id}, '${student.name || ''}', '${student.parent_name || ''}', '${phoneVal}', '${student.password || student.parent_password || ''}', '${student.teacher_name || ''}', '${student.classes_count || 8}', '${student.session_duration || 1}', '${student.fees || ''}', 'active')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">تفعيل</button>
                                 <button onclick="deleteStudent(${student.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">حذف</button>
@@ -599,7 +602,7 @@
             }
         }
 
-        // دالة إرسال تقرير واتساب بضغطة زر
+        // دالة إرسال تقرير واتساب
         function sendWhatsAppReport(parentPhone, studentName, reportDetails) {
             if (!parentPhone) {
                 alert("رقم الهاتف غير متوفر لهذا الطالب.");
@@ -607,12 +610,24 @@
             }
             let phone = parentPhone.replace(/\D/g, '');
             if (!phone.startsWith('2')) {
-                phone = '2' + phone; // كود مصر الافتراضي
+                phone = '2' + phone;
             }
-            
             const message = `السلام عليكم ولي أمر الطالب/ة (${studentName}) 🌿\n\nنحيطكم علماً بأداء وتقييم الطالب اليوم في أكاديمية منهاج:\n${reportDetails}\n\nمع تحيات إدارة الأكاديمية 📚`;
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        // دالة إرسال إشعار فيديو جديد لولي الأمر عبر واتساب
+        function sendVideoNotificationToParent(parentPhone, studentName, videoTitle) {
+            if (!parentPhone) {
+                alert("رقم هاتف ولي الأمر غير متوفر لهذا الطالب.");
+                return;
+            }
+            let phone = parentPhone.replace(/\D/g, '');
+            if (!phone.startsWith('2')) {
+                phone = '2' + phone;
+            }
+            const message = `أهلاً بك ولي أمر الطالب/ة (${studentName}) 🌿\n\nنحيطكم علماً بأن إدارة أكاديمية منهاج قامت برفع درس جديد على المنصة بعنوان:\n📌 *${videoTitle}*\n\nيمكنكم تسجيل الدخول ومتابعة الدرس الآن عبر منصة الأكاديمية 📚\nhttps://menhaj-academy.netlify.app`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
         function filterStudentsByStatus(status) {
@@ -824,7 +839,6 @@
             }
         }
 
-        // دالة رفع الفيديو مع خيار الوقت والزمن
         async function uploadVideo(e) {
             e.preventDefault();
             const btn = document.getElementById('btn_upload_video');
@@ -883,7 +897,6 @@
             }
         }
 
-        // دالة حفظ وإضافة أسئلة الاختبارات (Quizzes)
         async function saveQuiz(e) {
             e.preventDefault();
             const quizData = {

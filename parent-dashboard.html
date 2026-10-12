@@ -105,22 +105,30 @@
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
                     currentStudentObj = JSON.parse(savedUser);
+                    
+                    // التحقق من حالة التفعيل ومنع عرض البيانات إذا كان غير مفعل
+                    const sStatus = currentStudentObj.status ? String(currentStudentObj.status).toLowerCase().trim() : 'pending';
+                    if (sStatus !== 'active' && sStatus !== 'مفعل' && sStatus !== 'true') {
+                        window.location.href = 'pending.html';
+                        return;
+                    }
+
                     displayStudentData(currentStudentObj);
                     return;
                 }
 
-                const { data } = await _supabase.from('students').select('*').order('id', { ascending: false }).limit(1);
-                if (data && data.length > 0) {
-                    currentStudentObj = data[0];
-                    displayStudentData(currentStudentObj);
-                }
-            } catch(err) {}
+                // إذا لم يوجد حساب مخزن يتم التحويل لصفحة تسجيل الدخول بدلاً من تحميل أحدث طالب عشوائي
+                window.location.href = 'login.html';
+
+            } catch(err) {
+                window.location.href = 'login.html';
+            }
         };
 
         function displayStudentData(student) {
             document.getElementById('dispStudentName').textContent = '🎓 الطالب: ' + (student.name || 'غير معروف');
             document.getElementById('dispParentName').textContent = student.parent_name || 'غير محدد';
-            document.getElementById('dispTeacherName').textContent = student.teacher_name || 'ايمن صفوت نقادي احمد';
+            document.getElementById('dispTeacherName').textContent = student.teacher_name || 'غير محدد';
 
             let rawDuration = student.session_duration ?? student.duration ?? student.مدة_الجلسة ?? '';
             let durationText = 'غير محدد';
